@@ -1,2 +1,2 @@
-# nsgportal
+# eegplugin_nsg
 
