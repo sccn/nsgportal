@@ -4,14 +4,14 @@ nsg_info;
 
 [~, filename, ext] = fileparts(joblocation);
 if isempty(ext)
-    zipFile = fullfile(outputFolder, [ filename '.zip' ]);
+    zipFile = fullfile(outputfolder, [ filename '.zip' ]);
     zip(zipFile, joblocation);
     nsg_test(zipFile);
 else
     if ~strcmpi(ext, '.zip')
         error('Not a zip file');
     else
-        tmpFolder = fullfile(outputFolder, [ filename num2str(rand(1)*1000000) ]);
+        tmpFolder = fullfile(outputfolder, [ filename num2str(rand(1)*1000000) ]);
         currentFolder = pwd;
         mkdir(tmpFolder);
         cd(tmpFolder);

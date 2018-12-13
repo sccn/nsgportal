@@ -7,33 +7,33 @@ if nargin < 2
     filetype = 'xml';
 end
 if nargin < 1
-    command = sprintf('curl -u arnodelorme:%s -H cipres-appkey:%s %s/job/arnodelorme > tmptxt.xml', nsgPASSWORD, nsgKEY, nsgURL);
+    command = sprintf('curl -u arnodelorme:%s -H cipres-appkey:%s %s/job/arnodelorme > tmptxt.xml',  nsgpassword, nsgkey, nsgurl);
     system(command);
     res2 = xml2struct('tmptxt.xml');
     res2 = removeTextTag(res2);    
 else
     
     if strcmpi(filetype, 'xml')
-        command = sprintf(['curl -u arnodelorme:%s -H cipres-appkey:%s %s > tmptxt.' filetype], nsgPASSWORD, nsgKEY, jobname);
+        command = sprintf(['curl -u arnodelorme:%s -H cipres-appkey:%s %s > tmptxt.' filetype], nsgpassword, nsgkey, nsgurl);
         system(command);
         
         res2 = xml2struct('tmptxt.xml');
         res2 = removeTextTag(res2);
         
     elseif strcmpi(filetype, 'txt')
-        command = sprintf(['curl -u arnodelorme:%s -H cipres-appkey:%s %s > tmptxt.' filetype], nsgPASSWORD, nsgKEY, jobname);
+        command = sprintf(['curl -u arnodelorme:%s -H cipres-appkey:%s %s > tmptxt.' filetype], nsgpassword, nsgkey, nsgurl);
         system(command);
         res2 = [ 'tmptxt.' filetype ];
     else
         tmpval = fileparts(jobname);
         tmpval = fileparts(tmpval);
-        [tmp foldname] = fileparts(tmpval);
+        [tmp, foldname] = fileparts(tmpval);
         
-        tmpFolder = fullfile(outputFolder, foldname);
+        tmpFolder = fullfile(outputfolder, foldname);
         currentFolder = pwd;
         mkdir(tmpFolder)
         cd(tmpFolder);
-        command = sprintf(['curl -u arnodelorme:%s -H cipres-appkey:%s %s > tmptxt.' filetype], nsgPASSWORD, nsgKEY, jobname);
+        command = sprintf(['curl -u arnodelorme:%s -H cipres-appkey:%s %s > tmptxt.' filetype], nsgpassword, nsgkey, nsgurl);
         system(command);
         tmp = dir([ 'tmptxt.' filetype ]);
         if tmp.bytes == 0

@@ -1,5 +1,6 @@
-function pop_nsg(str, fig)
+function com = pop_nsg(str, fig)
 
+com = '';
 if nargin < 1
     res = nsg_jobs;
     jobnames = getjobnames(res);
