@@ -45,6 +45,7 @@ function com = pop_nsginfo( varargin )
 
 com = '';
 nsg_info;
+if ~exist('nsgusername' , 'var'), nsgusername  = ''; end
 if ~exist('nsgkey'      , 'var'), nsgkey       = ''; end
 if ~exist('nsgpassword' , 'var'), nsgpassword  = ''; end
 if ~exist('nsgurl'      , 'var'), nsgurl       = ''; end
@@ -60,6 +61,9 @@ if nargin < 2
     % which set to save
     % -----------------
     uilist = { ...
+        { 'style' 'text' 'string' 'NSG user name' } ...
+        { 'style' 'edit' 'string' nsgusername 'tag' 'nsgusername' } ...
+        { } ...
         { 'style' 'text' 'string' 'NSG user password' } ...
         { 'style' 'edit' 'string' nsgpassword 'tag' 'nsgpassword' } ...
         { } ...
@@ -72,7 +76,7 @@ if nargin < 2
         { 'style' 'text' 'string' 'Output folder' } ...
         { 'style' 'edit' 'string' outputfolder 'tag' 'outputfolder' } ...
         { 'Style', 'pushbutton', 'string', '...', 'callback', commandload } };
-    geometry = { [3 3 1] [3 3 1] [3 3 1] [3 3 1] };
+    geometry = { [3 3 1]  [3 3 1] [3 3 1] [3 3 1] [3 3 1] };
     
     [res,~,~,options] = inputgui( 'geometry', geometry, 'uilist', uilist, 'title', 'NSG settings - pop_nsginfo()', 'helpcom', 'pophelp(''pop_nsginfo'')');
     if isempty(res), return; end
@@ -82,7 +86,8 @@ end
 
 % decode inputs
 % -------------
-fieldlist = { 'nsgkey'          'string'       []         ''; 
+fieldlist = { 'nsgusername'     'string'       []         ''; 
+              'nsgkey'          'string'       []         ''; 
               'nsgpassword'     'string'       []         '';
               'nsgurl'          'string'       []         'https://nsgr.sdsc.edu:8443/cipresrest/v1';
               'outputfolder'    'string'       []         '' };

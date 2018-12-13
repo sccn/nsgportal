@@ -7,21 +7,21 @@ if nargin < 2
     filetype = 'xml';
 end
 if nargin < 1
-    command = sprintf('curl -u arnodelorme:%s -H cipres-appkey:%s %s/job/arnodelorme > tmptxt.xml',  nsgpassword, nsgkey, nsgurl);
+    command = sprintf('curl -u %s:%s -H cipres-appkey:%s %s/job/%s > tmptxt.xml', nsgusername,  nsgpassword, nsgkey, nsgurl, nsgusername);
     system(command);
     res2 = xml2struct('tmptxt.xml');
     res2 = removeTextTag(res2);    
 else
     
     if strcmpi(filetype, 'xml')
-        command = sprintf(['curl -u arnodelorme:%s -H cipres-appkey:%s %s > tmptxt.' filetype], nsgpassword, nsgkey, nsgurl);
+        command = sprintf(['curl -u %s:%s -H cipres-appkey:%s %s > tmptxt.' filetype], nsgusername, nsgpassword, nsgkey, jobname);
         system(command);
         
         res2 = xml2struct('tmptxt.xml');
         res2 = removeTextTag(res2);
         
     elseif strcmpi(filetype, 'txt')
-        command = sprintf(['curl -u arnodelorme:%s -H cipres-appkey:%s %s > tmptxt.' filetype], nsgpassword, nsgkey, nsgurl);
+        command = sprintf(['curl -u %s:%s -H cipres-appkey:%s %s > tmptxt.' filetype], nsgusername, nsgpassword, nsgkey, jobname);
         system(command);
         res2 = [ 'tmptxt.' filetype ];
     else
@@ -33,7 +33,7 @@ else
         currentFolder = pwd;
         mkdir(tmpFolder)
         cd(tmpFolder);
-        command = sprintf(['curl -u arnodelorme:%s -H cipres-appkey:%s %s > tmptxt.' filetype], nsgpassword, nsgkey, nsgurl);
+        command = sprintf(['curl -u %s:%s -H cipres-appkey:%s %s > tmptxt.' filetype], nsgusername, nsgpassword, nsgkey, jobname);
         system(command);
         tmp = dir([ 'tmptxt.' filetype ]);
         if tmp.bytes == 0
