@@ -46,9 +46,9 @@ function com = pop_nsginfo( varargin )
 com = '';
 nsg_info;
 if ~exist('nsgusername' , 'var'), nsgusername  = ''; end
-if ~exist('nsgkey'      , 'var'), nsgkey       = ''; end
+if ~exist('nsgkey'      , 'var'), nsgkey       = 'TestingEEGLAB-BCE8EC90088F4475AE48190A1B87EF8D'; end
 if ~exist('nsgpassword' , 'var'), nsgpassword  = ''; end
-if ~exist('nsgurl'      , 'var'), nsgurl       = ''; end
+if ~exist('nsgurl'      , 'var'), nsgurl       = 'https://nsgr.sdsc.edu:8443/cipresrest/v1'; end
 if ~exist('outputfolder', 'var'), outputfolder = ''; end
 
 if nargin < 2
@@ -87,7 +87,7 @@ end
 % decode inputs
 % -------------
 fieldlist = { 'nsgusername'     'string'       []         ''; 
-              'nsgkey'          'string'       []         ''; 
+              'nsgkey'          'string'       []         'TestingEEGLAB-BCE8EC90088F4475AE48190A1B87EF8D'; 
               'nsgpassword'     'string'       []         '';
               'nsgurl'          'string'       []         'https://nsgr.sdsc.edu:8443/cipresrest/v1';
               'outputfolder'    'string'       []         '' };
