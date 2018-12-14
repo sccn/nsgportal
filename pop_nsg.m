@@ -3,6 +3,10 @@ function com = pop_nsg(str, fig)
 com = '';
 if nargin < 1
     res = nsg_jobs;
+    if isfield(res, 'error')
+        errordlg2(res.error.message);
+        error(res.error.message);
+    end
     jobnames = getjobnames(res);
         
     cblist   = 'pop_nsg(''update'', gcbf);';
