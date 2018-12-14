@@ -12,7 +12,8 @@ end
 filename = fullfile(homefolder, 'nsg_info.mat');
 
 if ~exist(filename)
-    error('Could not find information file');
+    warning('Could not find information file');
+else
+    load('-mat', filename);
 end
 
-load('-mat', filename);
