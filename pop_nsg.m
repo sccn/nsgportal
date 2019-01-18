@@ -62,7 +62,7 @@ else
         case 'rescan'
             res = nsg_jobs;
             jobnames = getjobnames(res);
-            set(findobj(fig, 'tag', 'joblist'), 'string', jobnames);
+            set(findobj(fig, 'tag', 'joblist'), 'value', 1, 'string', jobnames);
             pop_nsg('update', fig);
             
         case 'delete'
