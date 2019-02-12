@@ -1,4 +1,42 @@
-function com = pop_nsg(str, fig)
+% pop_nsg() - manage interface EEGLAB-NSG fomr GUI and command line calls
+%
+% Usage: 
+%             >> [STUDY, ALLEEG] = pop_nsg;  % Call GUI  
+%             >> [STUDY, ALLEEG] = pop_nsg('optname', optarg); % Command line call
+%
+% Command line options :
+% These options must be provided as a single pair ('optname', optarg) per call
+%   'test'      - Perform test on the .zip or folder provided as argument.
+%   'output'    - Retrieve the output files of the job identifier provided
+%                 as argument
+%   'delete'    - Delete job  associated to job identifier provided
+%                 as argument
+%   'run'       - Submit .zip or folder provided as argument to run on NSG
+% 
+% Optional inputs:
+% Outputs:
+%   
+%  See also: nsg_delete(), nsg_jobs(), nsg_test(), nsg_run()
+%
+% Authors: Arnaud Delorme, Ramon Martinez-Cancino, SCCN/INC/UCSD 2019
+
+% Copyright (C) Arnaud Delorme
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+function com = pop_nsg(fig, str)
 
 com = '';
 if nargin < 1
@@ -9,14 +47,14 @@ if nargin < 1
     end
     jobnames = getjobnames(res);
         
-    cblist   = 'pop_nsg(''update'', gcbf);';
-    cbstdout = 'pop_nsg(''stdout'', gcbf);';
-    cbstderr = 'pop_nsg(''stderr'', gcbf);';
-    cboutput = 'pop_nsg(''output'', gcbf);';
-    cdelete  = 'pop_nsg(''delete'', gcbf);';
-    cdrescan = 'pop_nsg(''rescan'', gcbf);';
-    cbtest   = 'pop_nsg(''test'', gcbf);';
-    cbrun    = 'pop_nsg(''run'', gcbf);';
+    cblist   = 'pop_nsg(gcbf,''update'');';
+    cbstdout = 'pop_nsg(gcbf,''stdout'');';
+    cbstderr = 'pop_nsg(gcbf,''stderr'');';
+    cdrescan = 'pop_nsg(gcbf,''rescan'');';
+    cbtest   = 'pop_nsg(gcbf,''testgui'');';
+    cboutput = 'pop_nsg(gcbf,''outputgui'');';
+    cdelete  = 'pop_nsg(gcbf,''deletegui'');';
+    cbrun    = 'pop_nsg(gcbf,''rungui'');';
     cbzip    = '[filename pathname] = uigetfile({''*.zip'' ''*.ZIP''}); if ~isequal(pathname, 0), set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', fullfile(pathname, filename)); end; clear pathname filename;';
     cbdir    = 'pathname = uigetdir(); if ~isequal(pathname, 0), set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', pathname); end; clear pathname;';
     joblog   = char(ones(7,70)*' ');
@@ -47,15 +85,21 @@ if nargin < 1
         'geomvert'  , geomvert, ...
         'helpcom' , 'pophelp(''pop_nsg'')', ...
         'title'   , 'NSG-R Matlab/EEGLAB interface -- pop_nsg()', ...
-        'eval'    , 'pop_nsg(''update'', gcf)' );
+        'eval'    , 'pop_nsg(gcf,''update'')' );
 else
-    newjob  = get(findobj(fig, 'tag', 'fileorfolder'), 'string');
-    joblist = get(findobj(fig, 'tag', 'joblist'), 'string');
-    jobval  = get(findobj(fig, 'tag', 'joblist'), 'value');
-    if ~isempty(joblist)
-        jobstr = joblist{jobval};
-    else 
-        jobstr = '';
+    if ishandle(fig)
+        newjob  = get(findobj(fig, 'tag', 'fileorfolder'), 'string');
+        joblist = get(findobj(fig, 'tag', 'joblist'), 'string');
+        jobval  = get(findobj(fig, 'tag', 'joblist'), 'value');
+        
+        if ~isempty(joblist)
+            jobstr = joblist{jobval};
+        else
+            jobstr = '';
+        end
+    else
+        valargin = str;
+        str = fig;
     end
     
     switch str
@@ -63,13 +107,18 @@ else
             res = nsg_jobs;
             jobnames = getjobnames(res);
             set(findobj(fig, 'tag', 'joblist'), 'value', 1, 'string', jobnames);
-            pop_nsg('update', fig);
+            pop_nsg(fig, 'update');
+            
+        case 'deletegui'   
+            if ~isempty(jobstr)
+                pop_nsg('delete', jobstr);
+            end
+            pop_nsg(fig, 'rescan');
             
         case 'delete'
-            if ~isempty(jobstr)
-                nsg_delete(jobstr);
+            if ~isempty(valargin)
+                nsg_delete(valargin);
             end
-            pop_nsg('rescan', fig);
     
         case 'update'
             joblog   = char(ones(7,70)*' ');
@@ -93,7 +142,9 @@ else
                 jobtxt = strvcat(jobtxt{:});
                 set(findobj(fig, 'tag', 'joblog'), 'string', jobtxt);
             end
+
         case 'stdout'
+            if isempty(jobstr),disp('pop_nsg: No jobs were found.');return;end
             resjob  = nsg_jobs([ jobstr '/output' ]);
             if ~isempty(resjob.results.jobfiles)
                 url = geturl(resjob.results.jobfiles.jobfile, 'STDOUT');
@@ -111,7 +162,9 @@ else
             else
                 pophelp(resfile, 1);
             end
+            
         case 'stderr'
+            if isempty(jobstr),disp('pop_nsg: No jobs were found.');return;end
             resjob  = nsg_jobs([ jobstr '/output' ]);
             if ~isempty(resjob.results.jobfiles)
                 url = geturl(resjob.results.jobfiles.jobfile, 'STDERR');
@@ -129,8 +182,14 @@ else
             else
                 pophelp(resfile, 1);
             end
+            
+        case 'outputgui' 
+            if isempty(jobstr),disp('pop_nsg: No jobs were found.');return;end
+            pop_nsg('output', jobstr);
+
         case 'output'
-            resjob  = nsg_jobs([ jobstr '/output' ]);
+            if isempty(valargin),disp('pop_nsg: No jobs were found.');return;end
+            resjob  = nsg_jobs([ valargin '/output' ]);
             if ~isempty(resjob.results.jobfiles)
                 restmp  = nsg_jobs(geturl(resjob.results.jobfiles.jobfile, 'output.tar.gz'), 'zip');
             else
@@ -141,17 +200,34 @@ else
             else
                 warndlg2([ 'File downloaded and decompressed in the' 10 'output folder specified in the settings']);
             end
-        case 'test'
+            
+        case 'testgui'
             if isempty(newjob)
                 warndlg2('Empty input');
             else
-                nsg_test(newjob);
+                pop_nsg('test',newjob);
             end
-        case 'run'
-            if isempty(newjob)
+            
+        case 'test'
+            if isempty(valargin)
                 warndlg2('Empty input');
             else
-                nsg_run(newjob);
+                nsg_test(valargin);
+            end
+            
+        case 'rungui' 
+             if isempty(newjob)
+                warndlg2('Empty input');
+             else
+                pop_nsg('run', newjob);
+                pop_nsg(fig, 'rescan');
+             end
+            
+        case 'run'
+            if isempty(valargin)
+                warndlg2('Empty input');
+            else
+                nsg_run(valargin);
             end
     end
 end
