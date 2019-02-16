@@ -7,7 +7,7 @@ if nargin < 2
     filetype = 'xml';
 end
 if nargin < 1
-    command = sprintf('curl -u %s:%s -H cipres-appkey:%s %s/job/%s > tmptxt.xml', nsgusername,  nsgpassword, nsgkey, nsgurl, nsgusername);
+    command = sprintf('curl -u %s:%s -H cipres-appkey:%s "%s/job/%s?expand=true" > tmptxt.xml', nsgusername,  nsgpassword, nsgkey, nsgurl, nsgusername); % request full job status objects
     system(command);
     res2 = xml2struct('tmptxt.xml');
     res2 = removeTextTag(res2);    
