@@ -3,27 +3,22 @@
 % Usage:
 %   >> pop_nsginfo( 'key', val );
 %
-% Inputs:
-%   EEG       - input dataset
-%   locutoff  - lower edge of the frequency pass band (Hz)  {0 -> lowpass}
-%   hicutoff  - higher edge of the frequency pass band (Hz) {0 -> highpass}
-%   filtorder - length of the filter in points {default 3*fix(srate/locutoff)}
-%   revfilt   - [0|1] Reverse filter polarity (from bandpass to notch filter). 
-%                     Default is 0 (bandpass).
-%   usefft    - [0|1] 1 uses FFT filtering instead of FIR. Default is 0.
-%   plotfreqz - [0|1] plot frequency response of filter. Default is 0.
-%   firtype   - ['firls'|'fir1'] filter design method, default is 'firls'
-%               from the command line
-%   causal    - [0|1] 1 uses causal filtering. Default is 0.
+% Graphic interface:
+%   'NSG user name' : NSG User name
+%   'NSG user password': NSG password
+%   'NSG key': Application ID assigned to the application. See if UMBRELLA
+%              or DIRECT and update comment here.
+%   'NSG url': NSG URL Default: 'https://nsgr.sdsc.edu:8443/cipresrest/v1'
+%   'Output folder': Path to folder to store tenporray files.
 %
 % Outputs:
-%   EEGOUT   - output dataset
+%   com    - Command line call
 %
-% Author: Arnaud Delorme, CNL / Salk Institute, 2001
+% See also: nsg_delete(), nsg_test(), nsg_run(), nsg_findclientjoburl()
 %
-% See also: eegfilt(), eegfiltfft(), eeglab()
+% Authors:  Arnaud Delorme and Ramon Martinez-Cancino SCCN/INC/UCSD 2019
 
-% Copyright (C) 2001 Arnaud Delorme, Salk Institute, arno@salk.edu
+% Copyright (C)  Arnaud Delorme SCCN/INC/UCSD 2019
 %
 % This program is free software; you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
@@ -38,8 +33,6 @@
 % You should have received a copy of the GNU General Public License
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-% 01-25-02 reformated help & license -ad 
 
 function com = pop_nsginfo( varargin )
 
@@ -96,4 +89,3 @@ g = finputcheck( options, fieldlist, 'pop_nsginfo');
 save('-mat', filename, '-struct', 'g');
 
 com = sprintf('pop_nsginfo(%s);', vararg2str(options));
-
