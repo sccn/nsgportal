@@ -1,8 +1,8 @@
-% pop_nsg() - manage interface EEGLAB-NSG fomr GUI and command line calls
+% pop_nsg() - Manage interface EEGLAB-NSG from GUI and command line calls
 %
 % Usage: 
-%             >> [STUDY, ALLEEG] = pop_nsg;  % Call GUI  
-%             >> [STUDY, ALLEEG] = pop_nsg('optname', optarg); % Command line call
+%             >> [currentjob, alljobs, com] = pop_nsg;  % Call GUI  
+%             >> [currentjob, alljobs, com] = pop_nsg('optname', optarg); % Command line call
 %
 % Command line options :
 % These options must be provided as a single pair ('optname', optarg) per call
@@ -14,7 +14,15 @@
 %   'run'       - Submit .zip or folder provided as argument to run on NSG
 % 
 % Optional inputs:
+%
 % Outputs:
+%   currentjob  - When pop_nsg is called from the command line (see Command line  
+%                 options above), this output will return the job object of the 
+%                 job manipulated. When called from GUI this output will be the 
+%                 job object of the job selected in the user interface.
+%   alljobs     - Structre with the all the job objects currently in NSG
+%                 under your credentials
+%   com         - Commands for EEG history
 %   
 %  See also: nsg_delete(), nsg_jobs(), nsg_test(), nsg_run()
 %
@@ -36,9 +44,23 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-function com = pop_nsg(fig, str)
+function [currentjob, alljobs, com] = pop_nsg(fig, str, varargin)
+currentjob = []; alljobs = []; com = '';
 
-com = '';
+try
+    options = varargin;
+    if ~isempty( varargin )
+        for i = 1:2:numel(options)
+            g.(options{i}) = options{i+1};
+        end
+    else g= []; end
+catch
+    disp('pop_nsg() error: calling convention {''key'', value, ... } error'); return;
+end;
+
+try g.listvalue;   catch, g.listvalue   = 1 ;   end
+try g.jobid;       catch, g.jobid       = '';   end
+
 if nargin < 1
     res = nsg_jobs;
     if isfield(res, 'error')
@@ -79,13 +101,27 @@ if nargin < 1
     
     geom     = { [0.5 1 0.7] [1] [1 1] [1] [1 1 1.3] [1]   [1] [0.7 1 0.5 0.5] 1     [1 1 1] [1 1 1] };
     geomvert = [ [1]         [5] [1]   [5] [1]       [0.6] [1] [1]             [0.5] [1]     [1]     ];
+   
+    userdat.com = ''; 
+    [result, userdata] = inputgui( 'geometry', geom, ...
+                                   'uilist'  , uilist, ...
+                                   'geomvert', geomvert, ...
+                                   'helpcom' , 'pophelp(''pop_nsg'')', ...
+                                   'title'   , 'NSG-R Matlab/EEGLAB interface -- pop_nsg()', ...
+                                   'userdata', userdat,...
+                                   'eval'    , 'pop_nsg(gcf,''update'')' );
     
-    [result, userdat2, strhalt, outstruct, instruct] = inputgui( 'geometry', geom, ...
-        'uilist'  , uilist, ...
-        'geomvert'  , geomvert, ...
-        'helpcom' , 'pophelp(''pop_nsg'')', ...
-        'title'   , 'NSG-R Matlab/EEGLAB interface -- pop_nsg()', ...
-        'eval'    , 'pop_nsg(gcf,''update'')' );
+     % GUI call command line output
+     tmpalljobs = nsg_jobs;
+     if ~isempty(tmpalljobs.joblist.jobs) && ~isempty(result)
+         alljobs = tmpalljobs.joblist.jobs.jobstatus;
+         if length(tmpalljobs.joblist.jobs.jobstatus)== 1
+             currentjob = tmpalljobs.joblist.jobs.jobstatus(1);
+         else
+             currentjob = tmpalljobs.joblist.jobs.jobstatus{result{1}};
+         end
+     end
+     
 else
     if ishandle(fig)
         newjob  = get(findobj(fig, 'tag', 'fileorfolder'), 'string');
@@ -97,6 +133,9 @@ else
         else
             jobstr = '';
         end
+        
+        % For com output
+        userdat = get(fig,'userdata');      
     else
         valargin = str;
         str = fig;
@@ -106,18 +145,23 @@ else
         case 'rescan'
             res = nsg_jobs;
             jobnames = getjobnames(res);
-            set(findobj(fig, 'tag', 'joblist'), 'value', 1, 'string', jobnames);
+            set(findobj(fig, 'tag', 'joblist'), 'value', g.listvalue, 'string', jobnames);
             pop_nsg(fig, 'update');
             
         case 'deletegui'   
             if ~isempty(jobstr)
                 pop_nsg('delete', jobstr);
             end
-            pop_nsg(fig, 'rescan');
+            pop_nsg(fig, 'rescan','listvalue',1);
             
         case 'delete'
             if ~isempty(valargin)
-                nsg_delete(valargin);
+                % Command line output
+                tmpcurrentjob = nsg_jobs(valargin);
+                currentjob = tmpcurrentjob.jobstatus;
+                currentjob.jobStage = 'DELETED';
+                % Deleting job
+                nsg_delete(valargin);         
             end
     
         case 'update'
@@ -199,7 +243,10 @@ else
                 warndlg2('File is empty, check error');
             else
                 warndlg2([ 'File downloaded and decompressed in the' 10 'output folder specified in the settings']);
-            end
+            end          
+            % Command line output
+            tmpcurrentjob = nsg_jobs(valargin);
+            currentjob = tmpcurrentjob.jobstatus;
             
         case 'testgui'
             if isempty(newjob)
@@ -220,15 +267,23 @@ else
                 warndlg2('Empty input');
              else
                 pop_nsg('run', newjob);
-                pop_nsg(fig, 'rescan');
-             end
-            
+                pop_nsg(fig, 'rescan','listvalue',length(get(findobj(gcf,'tag','joblist'),'string'))+1);
+             end    
+             
         case 'run'
             if isempty(valargin)
                 warndlg2('Empty input');
-            else
-                nsg_run(valargin);
+            else              
+                currentjoburl = nsg_run(valargin,'jobid', g.jobid);                
+                % Command line output
+                tmpcurrentjob = nsg_jobs(currentjoburl);
+                currentjob = tmpcurrentjob.jobstatus;               
             end
+    end 
+    
+    % Command line output
+    if ~ishandle(fig)
+        alljobs    = nsg_jobs;
     end
 end
 
@@ -255,4 +310,3 @@ function jobnames = getjobnames(res)
             jobnames{iJob} = jobStatus{iJob}.selfUri.url;
         end
     catch, end
-
