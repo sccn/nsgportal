@@ -2,7 +2,7 @@
 %                          
 % Usage: 
 %             >> jobURL = nsg_run(joblocation)
-%             >> jobURL = nsg_run(joblocation, 'clientjobid', 'job02')
+%             >> jobURL = nsg_run(joblocation, 'jobid', 'job02')
 %
 % Inputs:
 %  joblocation    - Path to the zip file containing the job to submit to NSG
@@ -11,7 +11,7 @@
 %  jobURL         - [string] Job URL
 %
 % Optional inputs:
-%  'clientjobid'  - String with the client job id. This was assigned to the
+%  'jobid'        - String with the client job id. This was assigned to the
 %                   job when created.
 %   
 %  See also: nsg_delete(), nsg_jobs(), nsg_test(), nsg_run(), nsg_findclientjoburl()
@@ -46,7 +46,7 @@ try
 catch
     disp('nsg_run() error: calling convention {''key'', value, ... } error'); return;
 end
-try g.clientjobid;   catch, g.clientjobid   = randi(10000);  end
+try g.jobid; assert(~isempty(g.jobid));  catch, g.jobid   = randi(10000);  end
 
 nsg_info;
 
@@ -59,13 +59,9 @@ else
 end
 
 % submit job
-if isempty(g.clientjobid)
-    command = sprintf('curl -u %s:%s -H cipres-appkey:%s %s/job/%s -F tool=EEGLAB_TG -F input.infile_=@%s -F metadata.statusEmail=true > tmptxt.xml', nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername, zipFile);
-else
-    command = sprintf('curl -u %s:%s -H cipres-appkey:%s %s/job/%s -F tool=EEGLAB_TG -F input.infile_=@%s -F metadata.statusEmail=true  -F metadata.clientJobId=%s > tmptxt.xml', nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername, zipFile, num2str(g.clientjobid));
-end
+command = sprintf('curl -u %s:%s -H cipres-appkey:%s %s/job/%s -F tool=EEGLAB_TG -F input.infile_=@%s -F metadata.statusEmail=true  -F metadata.clientJobId=%s > tmptxt.xml', nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername, zipFile, num2str(g.jobid));
 system(command);
 disp('Job has been submitted!');
 
 % Find job URL
-jobURL = nsg_findclientjoburl(num2str(g.clientjobid)); 
+jobURL = nsg_findclientjoburl(num2str(g.jobid)); 
