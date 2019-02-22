@@ -7,10 +7,10 @@
 % Command line options :
 % These options must be provided as a single pair ('optname', optarg) per call
 %   'test'      - Perform test on the .zip or folder provided as argument.
-%   'output'    - Retrieve the output files of the job identifier provided
-%                 as argument
-%   'delete'    - Delete job  associated to job identifier provided
-%                 as argument
+%   'output'    - Retrieve the output files of the job identifier or job 
+%                 structure  provided as argument
+%   'delete'    - Delete job  associated to job identifier or job structure 
+%                 provided as argument
 %   'run'       - Submit .zip or folder provided as argument to run on NSG
 % 
 % Optional inputs:
@@ -137,7 +137,15 @@ else
         % For com output
         userdat = get(fig,'userdata');      
     else
-        valargin = str;
+        if isstruct(str) 
+            if isfield(str,'selfUri')
+                valargin = str.selfUri.url;
+            else
+                error('pop_nsg: Invalid job structure provided as input');
+            end
+        else
+            valargin = str;
+        end
         str = fig;
     end
     
@@ -283,7 +291,10 @@ else
     
     % Command line output
     if ~ishandle(fig)
-        alljobs    = nsg_jobs;
+        tmpalljobs    = nsg_jobs;
+        if ~isempty(tmpalljobs.joblist.jobs)
+            alljobs = tmpalljobs.joblist.jobs.jobstatus; %tmpalljobs.jobstatus;
+        end
     end
 end
 
