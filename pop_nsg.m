@@ -14,6 +14,21 @@
 %   'run'       - Submit .zip or folder provided as argument to run on NSG
 % 
 % Optional inputs:
+%   'jobid'           - String with the client job id. This was assigned to the
+%                       job when created. Use with command line option option 'run'. 
+%                       Default: None
+%   'outfile'         - String with the name of the results file. 
+%                       Default: ['nsgresults_' jobname] . Jobname here is the
+%                       name of the file submitted. Use with command line option 
+%                       option 'run'. 
+%   'runtime'         - Time (in hours) to allocate for running the job in NSG. 
+%                       Maximun time allocation is 48 hrs. Use with command line 
+%                       option option 'run'. Default: 0.5
+%   'filename'        - Name of main file to run in NSG. Default: 'test.m'
+%                       Use with command line option option 'run'.
+%   'subdirname'      - Name of Sub-directory containing the main file i.e. if
+%                       your main file is not on the top level directory. Use
+%                       with command line option option 'run'. Default: None
 %
 % Outputs:
 %   currentjob  - When pop_nsg is called from the command line (see Command line  
@@ -58,8 +73,12 @@ catch
     disp('pop_nsg() error: calling convention {''key'', value, ... } error'); return;
 end;
 
-try g.listvalue;   catch, g.listvalue   = 1 ;   end
-try g.jobid;       catch, g.jobid       = '';   end
+try g.listvalue;        catch, g.listvalue       = 1 ;          end
+try g.jobid;            catch, g.jobid           = '';          end
+try g.outfile;          catch, g.outfile         = '';          end % Default defined in nsg_run
+try g.runtime;          catch, g.runtime         = 0.5;         end
+try g.filename;         catch, g.filename        = 'test.m';    end
+try g.subdirname;       catch, g.subdirname      = '';          end
 
 if nargin < 1
     res = nsg_jobs;
@@ -282,7 +301,7 @@ else
             if isempty(valargin)
                 warndlg2('Empty input');
             else              
-                currentjoburl = nsg_run(valargin,'jobid', g.jobid);                
+                currentjoburl = nsg_run(valargin,'jobid', g.jobid,'outfile',g.outfile,'runtime',g.runtime,'filename', g.filename, 'subdirname', g.subdirname);                
                 % Command line output
                 tmpcurrentjob = nsg_jobs(currentjoburl);
                 currentjob = tmpcurrentjob.jobstatus;               
