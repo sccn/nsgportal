@@ -11,8 +11,17 @@
 %  jobURL         - [string] Job URL
 %
 % Optional inputs:
-%  'jobid'        - String with the client job id. This was assigned to the
-%                   job when created.
+%  'jobid'          - String with the client job id. This was assigned to the
+%                     job when created. Default: None
+%  'outfile'        - String with the name of the results file. 
+%                     Default: ['nsgresults_'jobname] . Jobname here is the
+%                     name of the file submitted.
+%  'runtime'        - Time (in hours) to allocate for running the job in NSG. 
+%                     Maximun time allocation is 48 hrs. Default: 0.5
+%  'filename'       - Name of main file to run in NSG. Default: 'test.m'
+%  'subdirname'     - Name of Sub-directory containing the main file i.e. if
+%                     your main file is not on the top level directory.
+%                     Default: None
 %   
 %  See also: nsg_delete(), nsg_jobs(), nsg_test(), nsg_run(), nsg_findclientjoburl()
 %
@@ -36,6 +45,8 @@
 
 function jobURL = nsg_run(joblocation, varargin)
 
+[trash, jobname] = fileparts(joblocation);
+default_outfile = ['nsgresults_' jobname];
 try
     options = varargin;
     if ~isempty( varargin )
@@ -46,7 +57,11 @@ try
 catch
     disp('nsg_run() error: calling convention {''key'', value, ... } error'); return;
 end
-try g.jobid; assert(~isempty(g.jobid));  catch, g.jobid   = randi(10000);  end
+try g.jobid; assert(~isempty(g.jobid));       catch, g.jobid           = randi(10000);            end  
+try g.outfile; assert(~isempty(g.outfile));   catch, g.outfile         = default_outfile;         end
+try g.runtime;                                catch, g.runtime         = 0.5;                     end
+try g.filename;                               catch, g.filename        = 'test.m';                end
+try g.subdirname;                             catch, g.subdirname      = '';                      end
 
 nsg_info;
 
@@ -58,10 +73,24 @@ else
     zipFile = joblocation;
 end
 
-% submit job
-command = sprintf('curl -u %s:%s -H cipres-appkey:%s %s/job/%s -F tool=EEGLAB_TG -F input.infile_=@%s -F metadata.statusEmail=true  -F metadata.clientJobId=%s > tmptxt.xml', nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername, zipFile, num2str(g.jobid));
+% Create command to run job
+curlcom = ['curl -u %s:%s -H cipres-appkey:%s %s/job/%s -F tool=EEGLAB_TG'...
+                                                      ' -F input.infile_=@%s'...
+                                                      ' -F metadata.statusEmail=true'...
+                                                      ' -F metadata.clientJobId=%s'...
+                                                      ' -F vparam.outputfilename_=%s'...
+                                                      ' -F vparam.runtime_=''%s'''...
+                                                      ' -F vparam.filename_=%s'];                                                                                                                                                                                                    
+% Submit job
+if isempty(g.subdirname)
+   command = sprintf([curlcom ' > tmptxt.xml'], nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername,...
+                                                zipFile, num2str(g.jobid), g.outfile, num2str(g.runtime), g.filename);                                                                                    
+else
+   command = sprintf([curlcom ' -F vparam.subdirname_=%s > tmptxt.xml'], nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername,...
+                                                                      zipFile, num2str(g.jobid), g.outfile, num2str(g.runtime), g.filename, g.subdirname);
+end
 system(command);
 disp('Job has been submitted!');
 
 % Find job URL
-jobURL = nsg_findclientjoburl(num2str(g.jobid)); 
+jobURL = nsg_findclientjoburl(num2str(g.jobid));
