@@ -37,8 +37,8 @@ function [jobURL, jobstruct] = nsg_findclientjoburl(clientjobid)
 jobURL = []; jobindx = []; jobstruct= [];
 
 alljobs = nsg_jobs;
-njobs = length(alljobs.joblist.jobs.jobstatus);
 if ~isempty(alljobs.joblist.jobs)
+    njobs = length(alljobs.joblist.jobs.jobstatus);
     for i =1:njobs
         if njobs ~= 1
             tmp = alljobs.joblist.jobs.jobstatus{i};
