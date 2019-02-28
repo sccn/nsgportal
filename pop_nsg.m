@@ -65,6 +65,7 @@ currentjob = []; alljobs = []; com = '';
 try
     options = varargin;
     if ~isempty( varargin )
+        if ~ischar(options{1}), options = options{1}; end
         for i = 1:2:numel(options)
             g.(options{i}) = options{i+1};
         end
@@ -86,40 +87,40 @@ if nargin < 1
         errordlg2(res.error.message);
         error(res.error.message);
     end
-    jobnames = getjobnames(res);
-        
-    cblist   = 'pop_nsg(gcbf,''update'');';
-    cbstdout = 'pop_nsg(gcbf,''stdout'');';
-    cbstderr = 'pop_nsg(gcbf,''stderr'');';
-    cdrescan = 'pop_nsg(gcbf,''rescan'');';
-    cbtest   = 'pop_nsg(gcbf,''testgui'');';
-    cboutput = 'pop_nsg(gcbf,''outputgui'');';
-    cdelete  = 'pop_nsg(gcbf,''deletegui'');';
-    cbrun    = 'pop_nsg(gcbf,''rungui'');';
-    cbzip    = '[filename pathname] = uigetfile({''*.zip'' ''*.ZIP''}); if ~isequal(pathname, 0), set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', fullfile(pathname, filename)); end; clear pathname filename;';
-    cbdir    = 'pathname = uigetdir(); if ~isequal(pathname, 0), set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', pathname); end; clear pathname;';
-    joblog   = char(ones(7,70)*' ');
+    jobnames    = getjobnames(res); 
+    cblist      = 'pop_nsg(gcbf,''update'');';
+    cbstdout    = 'pop_nsg(gcbf,''stdout'');';
+    cbstderr    = 'pop_nsg(gcbf,''stderr'');';
+    cdrescan    = 'pop_nsg(gcbf,''rescan'');';
+    cbtest      = 'pop_nsg(gcbf,''testgui'');';
+    cboutput    = 'pop_nsg(gcbf,''outputgui'');';
+    cdelete     = 'pop_nsg(gcbf,''deletegui'');';
+    cbrun       = 'pop_nsg(gcbf,''rungui'',eval( [ ''{'' get(findobj(gcf,''tag'',''edit_runopt''),''string'') ''}'' ] ));'; %cbrun       = 'pop_nsg(gcbf,''rungui'',);';
+    cbsetmfile  = 'jobfile = get(findobj(gcbf,''tag'',''fileorfolder''),''String''); mfilelist = '' '';if ~isempty(jobfile),if isdir(jobfile),mfilestmp = dir(fullfile(jobfile, ''*.m''));if ~isempty(mfilestmp), mfilelist = {mfilestmp.name}; end;else,mfilelist = listzipcontents(jobfile, ''.m'');if isempty(mfilelist), mfilelist = '' ''; end; end;set(findobj(gcbf,''tag'',''listbox_mfile''),''string'',mfilelist,''Value'', 1);end;clear pathname filename;';
+    cbload      =  ['ButtonName = questdlg2(''Do you want to load a ZIP file or a folder?'',''pop_nsg'',''Folder'', ''ZIP File'', ''ZIP File'');if strcmpi(ButtonName, ''zip file''),[filename pathname] = uigetfile({''*.zip'' ''*.ZIP''});if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', fullfile(pathname, filename));end;else,pathname = uigetdir();if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', pathname);end;end;' cbsetmfile];
+    joblog      = char(ones(7,70)*' ');
     uilist = { { 'style' 'text'       'string' 'Select job' 'fontweight' 'bold' } {} ...
-        { 'style' 'pushbutton' 'string' 'Rescan jobs' 'fontweight' 'bold' 'callback' cdrescan } ...
+        { 'style' 'pushbutton' 'string' 'Rescan NSG jobs' 'callback' cdrescan } ...
         { 'style' 'listbox'    'string' jobnames 'tag' 'joblist' 'callback' cblist} ...
         { 'style' 'text' 'string' 'XXXXXXXXXXXX' 'tag' 'jobstatus' } ...
-        { 'style' 'pushbutton' 'string' 'Delete this job on NSG' 'callback' cdelete } ...
+        { 'style' 'pushbutton' 'string' 'Delete this NSG job' 'callback' cdelete } ...
         { 'style' 'text' 'string' joblog 'tag' 'joblog' } ...
-        { 'style' 'pushbutton' 'string' 'See text output' 'callback' cbstdout } ...
-        { 'style' 'pushbutton' 'string' 'See errors' 'callback' cbstderr } ...
-        { 'style' 'pushbutton' 'string' 'Download results' 'callback' cboutput } ...
-        { } ...
-        { 'style' 'text'       'string' 'Submit new job' 'fontweight' 'bold' } ...
+        { 'style' 'pushbutton' 'string' 'View job output log' 'callback' cbstdout } ...
+        { 'style' 'pushbutton' 'string' 'View job error log' 'callback' cbstderr } ...
+        { 'style' 'pushbutton' 'string' 'Download NSG job results' 'callback' cboutput } ...
+        {} ...
+        { 'style' 'text'       'string' 'Submit new NSG job' 'fontweight' 'bold' } ...
         { 'style' 'text'       'string' 'Job folder or .zip file' } ...
         { 'style' 'edit'       'string' '' 'tag' 'fileorfolder' } ...
-        { 'style' 'pushbutton' 'string' 'Browse zip'    'callback' cbzip } ...
-        { 'style' 'pushbutton' 'string' 'Browse folder' 'callback' cbdir } ...
-        {} ...
-        {} { 'style' 'pushbutton' 'string' 'Test job (unix/Mac only)' 'callback' cbtest } {} ...
-        {} { 'style' 'pushbutton' 'string' 'Run job' 'callback' cbrun } {} };
+        { 'style' 'pushbutton' 'string' '..'    'callback' cbload } ...
+        { 'style' 'text'       'string' 'Matlab script to execute'} {'style' 'popupmenu' 'string' {' '} 'tag' 'listbox_mfile'} {} ...
+        {} {} {'style' 'pushbutton' 'string' 'Test job locally' 'callback' cbtest}  ...
+        {}...
+        {'style' 'text'        'string' 'NSG run options (see Help)'} {'style' 'edit' 'string' ' ' 'tag' 'edit_runopt'}...
+        {} {} {'style' 'pushbutton' 'string' 'Run job on NSG' 'callback' cbrun} };
     
-    geom     = { [0.5 1 0.7] [1] [1 1] [1] [1 1 1.3] [1]   [1] [0.7 1 0.5 0.5] 1     [1 1 1] [1 1 1] };
-    geomvert = [ [1]         [5] [1]   [5] [1]       [0.6] [1] [1]             [0.5] [1]     [1]     ];
+    geom     = { [0.5 1 0.7] [1] [1 1] [1] [1 1 1.3] [1]   [1] [0.7 1.1 0.4]  [0.7 1.2 0.4] [1 1 1] [1]   [0.7 1.5] [1 1 1] };
+    geomvert = [ [1]         [5] [1]   [5] [1]       [0.6] [1] [1]              [1]         [1]     [0.5] [1]       [1]];
    
     userdat.com = ''; 
     [result, userdata] = inputgui( 'geometry', geom, ...
@@ -146,6 +147,15 @@ else
         newjob  = get(findobj(fig, 'tag', 'fileorfolder'), 'string');
         joblist = get(findobj(fig, 'tag', 'joblist'), 'string');
         jobval  = get(findobj(fig, 'tag', 'joblist'), 'value');
+        tmplist = get(findobj(fig, 'tag', 'listbox_mfile'), 'string');
+        if any(strcmp(str,{'run', 'test'}))
+            % mfiles
+            if ~isempty(deblank(tmplist))
+                g.filename  = tmplist{get(findobj(fig, 'tag', 'listbox_mfile'), 'value')}; % Updating mfile
+            else
+                warndlg2('Select MATLAB script to execute'); return;
+            end            
+        end
         
         if ~isempty(joblist)
             jobstr = joblist{jobval};
@@ -262,7 +272,10 @@ else
             if isempty(valargin),disp('pop_nsg: No jobs were found.');return;end
             resjob  = nsg_jobs([ valargin '/output' ]);
             if ~isempty(resjob.results.jobfiles)
-                restmp  = nsg_jobs(geturl(resjob.results.jobfiles.jobfile, 'output.tar.gz'), 'zip');
+                % Find zip file of results (name is not fixed anymore)
+                [trash, trash, exts] = cellfun(@(x) fileparts(x.filename),resjob.results.jobfiles.jobfile,'UniformOutput',0); 
+                zipfilepos = cell2mat(cellfun(@(x) strcmp(x,'.gz'),exts,'UniformOutput',0));
+                restmp  = nsg_jobs(resjob.results.jobfiles.jobfile{zipfilepos}.downloadUri.url, 'zip');
             else
                 restmp = 0;
             end
@@ -292,7 +305,7 @@ else
         case 'rungui' 
              if isempty(newjob)
                 warndlg2('Empty input');
-             else
+             else                 
                 pop_nsg('run', newjob);
                 pop_nsg(fig, 'rescan','listvalue',length(get(findobj(gcf,'tag','joblist'),'string'))+1);
              end    
