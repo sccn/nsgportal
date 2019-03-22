@@ -69,10 +69,10 @@ try
         for i = 1:2:numel(options)
             g.(options{i}) = options{i+1};
         end
-    else g= []; end
+    else, g= []; end
 catch
     disp('pop_nsg() error: calling convention {''key'', value, ... } error'); return;
-end;
+end
 
 try g.listvalue;        catch, g.listvalue       = 1 ;          end
 try g.jobid;            catch, g.jobid           = '';          end
@@ -87,7 +87,8 @@ if nargin < 1
         errordlg2(res.error.message);
         error(res.error.message);
     end
-    jobnames    = getjobnames(res); 
+    clientjoburl = getjobnames(res); 
+    jobnames     = nsg_getjobid(clientjoburl,1);
     cblist      = 'pop_nsg(gcbf,''update'');';
     cbstdout    = 'pop_nsg(gcbf,''stdout'');';
     cbstderr    = 'pop_nsg(gcbf,''stderr'');';
@@ -113,14 +114,13 @@ if nargin < 1
         { 'style' 'text'       'string' 'Job folder or .zip file' } ...
         { 'style' 'edit'       'string' '' 'tag' 'fileorfolder' } ...
         { 'style' 'pushbutton' 'string' '..'    'callback' cbload } ...
-        { 'style' 'text'       'string' 'Matlab script to execute'} {'style' 'popupmenu' 'string' {' '} 'tag' 'listbox_mfile'} {} ...
-        {} {} {'style' 'pushbutton' 'string' 'Test job locally' 'callback' cbtest}  ...
+        { 'style' 'text'       'string' 'Matlab script to execute'} {'style' 'popupmenu' 'string' {' '} 'tag' 'listbox_mfile'} {'style' 'pushbutton' 'string' 'Test job locally' 'callback' cbtest} ...
         {}...
         {'style' 'text'        'string' 'NSG run options (see Help)'} {'style' 'edit' 'string' ' ' 'tag' 'edit_runopt'}...
-        {} {} {'style' 'pushbutton' 'string' 'Run job on NSG' 'callback' cbrun} };
+        {} {'style' 'pushbutton' 'string' 'Run job on NSG' 'callback' cbrun}  {} };
     
-    geom     = { [0.5 1 0.7] [1] [1 1] [1] [1 1 1.3] [1]   [1] [0.7 1.1 0.4]  [0.7 1.2 0.4] [1 1 1] [1]   [0.7 1.5] [1 1 1] };
-    geomvert = [ [1]         [5] [1]   [5] [1]       [0.6] [1] [1]              [1]         [1]     [0.5] [1]       [1]];
+    geom     = { [0.5 1 0.7] [1] [1 1] [1] [1 1 1.3] [1]   [1] [0.7 1 0.5]  [0.7 1.1 0.5]  [1]   [0.7 1.5] [0.92 1 1] };
+    geomvert = [ [1]         [5] [1]   [5] [1]       [0.6] [1] [1]          [1]            [0.5] [1]       [1]];
    
     userdat.com = ''; 
     [result, userdata] = inputgui( 'geometry', geom, ...
@@ -129,7 +129,7 @@ if nargin < 1
                                    'helpcom' , 'pophelp(''pop_nsg'')', ...
                                    'title'   , 'NSG-R Matlab/EEGLAB interface -- pop_nsg()', ...
                                    'userdata', userdat,...
-                                   'eval'    , 'pop_nsg(gcf,''update'')' );
+                                   'eval'    , 'pop_nsg(gcf,''update'');' );
     
      % GUI call command line output
      tmpalljobs = nsg_jobs;
@@ -158,7 +158,13 @@ else
         end
         
         if ~isempty(joblist)
-            jobstr = joblist{jobval};
+            if ischar(joblist), joblist = {joblist}; end
+            for ijobs =1:length(joblist)
+                if ~isnsgurl(joblist{ijobs})
+                    joblist{ijobs} = nsg_findclientjoburl(joblist{ijobs});
+                end
+            end
+            jobstr = joblist{jobval};            
         else
             jobstr = '';
         end
@@ -181,7 +187,8 @@ else
     switch str
         case 'rescan'
             res = nsg_jobs;
-            jobnames = getjobnames(res);
+            clientjoburl = getjobnames(res);
+            jobnames = nsg_getjobid(clientjoburl,1);
             set(findobj(fig, 'tag', 'joblist'), 'value', g.listvalue, 'string', jobnames);
             pop_nsg(fig, 'update');
             
@@ -305,9 +312,15 @@ else
         case 'rungui' 
              if isempty(newjob)
                 warndlg2('Empty input');
-             else                 
-                pop_nsg('run', newjob);
-                pop_nsg(fig, 'rescan','listvalue',length(get(findobj(gcf,'tag','joblist'),'string'))+1);
+             else   
+                tmpparams = eval( [ '{' get(findobj(gcf,'tag','edit_runopt'),'string') '}' ] );
+                pop_nsg('run', newjob, tmpparams{:});
+                if iscell(get(findobj(gcf,'tag','joblist'),'string'))
+                    listpos = length(get(findobj(gcf,'tag','joblist'),'string'))+1;
+                elseif ~isempty(get(findobj(gcf,'tag','joblist'),'string'))
+                    listpos = 2;
+                end               
+                pop_nsg(fig, 'rescan','listvalue',listpos);
              end    
              
         case 'run'
@@ -316,8 +329,10 @@ else
             else              
                 currentjoburl = nsg_run(valargin,'jobid', g.jobid,'outfile',g.outfile,'runtime',g.runtime,'filename', g.filename, 'subdirname', g.subdirname);                
                 % Command line output
-                tmpcurrentjob = nsg_jobs(currentjoburl);
-                currentjob = tmpcurrentjob.jobstatus;               
+                if ~isempty(currentjoburl)
+                    tmpcurrentjob = nsg_jobs(currentjoburl);
+                    currentjob = tmpcurrentjob.jobstatus;
+                end
             end
     end 
     
@@ -329,8 +344,8 @@ else
         end
     end
 end
-
-% get result type
+end
+% ---
 function url = geturl(results, resultType)
 url = '';
 if ~iscell(results)
@@ -342,9 +357,9 @@ for iRes = 1:length(results)
         url = results{iRes}.downloadUri.url;
     end
 end
-
+end
+% ---
 function jobnames = getjobnames(res)
-    jobStatus = {};
     jobnames = {};
     try
         jobStatus = res.joblist.jobs.jobstatus;
@@ -352,4 +367,14 @@ function jobnames = getjobnames(res)
         for iJob = 1:length(jobStatus)
             jobnames{iJob} = jobStatus{iJob}.selfUri.url;
         end
-    catch, end
+    catch
+    end
+end
+% ---   
+function urlflag = isnsgurl(urlcheck)
+if length(urlcheck)>= 20
+    urlflag =fastif(strcmp('https://nsgr.sdsc.edu',urlcheck(1:21)),1,0);  
+else
+    urlflag = 0;
+end
+end
