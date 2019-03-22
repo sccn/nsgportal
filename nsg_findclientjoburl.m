@@ -1,16 +1,16 @@
-% nsg_findclientjoburl() - Given a Client Job ID, find and returns job URL 
-%                          and job object. In case the job is not found
-%                          will return empty outputs.
+% nsg_findclientjoburl() - Given one or more Client Job ID, the function 
+%                          find and returns the job URL and job object. In  
+%                          case the job is not found will return empty outputs.
 %                          
 % Usage: 
 %             >> [jobURL, jobstruct] = nsg_findclientjoburl(clientjobid);  
 %
 % Inputs:
-%  clientjobid  - String with the client job id. This was assigned to the
-%                 job when created.
+%  clientjobid  - String or cell array of strings of client job id(s). 
+%                 Job ids are assigned to the job when created.
 % Outputs:
-%  jobURL       - [string] Job URL
-%  jobstruct    - [structure] Job object structure.
+%  jobURL       - [string] Job URL(s)
+%  jobstruct    - [structure] Job object structure(s).
 %   
 %  See also: nsg_delete(), nsg_jobs(), nsg_test(), nsg_run()
 %
@@ -35,29 +35,42 @@
 function [jobURL, jobstruct] = nsg_findclientjoburl(clientjobid)
 
 jobURL = []; jobindx = []; jobstruct= [];
+if iscell(clientjobid)
+    ninputs = length(clientjobid);
+else
+    ninputs = 1;
+end
 
 alljobs = nsg_jobs;
 if ~isempty(alljobs.joblist.jobs)
     njobs = length(alljobs.joblist.jobs.jobstatus);
-    for i =1:njobs
-        if njobs ~= 1
-            tmp = alljobs.joblist.jobs.jobstatus{i};
-        else
-            tmp = alljobs.joblist.jobs.jobstatus;
-        end
+    for icells = 1:ninputs
+        if iscell(clientjobid), clientjobidtpm = clientjobid{icells}; else, clientjobidtpm = clientjobid; end
+        for i =1:njobs
+            if njobs ~= 1
+                tmp = alljobs.joblist.jobs.jobstatus{i};
+            else
+                tmp = alljobs.joblist.jobs.jobstatus;
+            end
             
-        tmphit = find(cellfun(@(x) strcmp(x.value,clientjobid),tmp.metadata.entry));
-        if ~isempty(tmphit)
-            jobindx = i;
+            tmphit = find(cellfun(@(x) strcmp(x.value,clientjobidtpm),tmp.metadata.entry));
+            if ~isempty(tmphit)
+                jobindx = i;
+            end
         end
-    end
-    if ~isempty(jobindx)
-        if njobs ~= 1
-            jobURL = alljobs.joblist.jobs.jobstatus{i}.selfUri.url;
-            jobstruct = alljobs.joblist.jobs.jobstatus{i};
-        else
-            jobURL = alljobs.joblist.jobs.jobstatus.selfUri.url;
-            jobstruct = alljobs.joblist.jobs.jobstatus;
+        if ~isempty(jobindx)
+            if njobs ~= 1
+                if ninputs~=1
+                    jobURL{icells} = alljobs.joblist.jobs.jobstatus{jobindx}.selfUri.url;
+                    jobstruct{icells} = alljobs.joblist.jobs.jobstatus{jobindx};
+                else
+                    jobURL = alljobs.joblist.jobs.jobstatus{jobindx}.selfUri.url;
+                    jobstruct = alljobs.joblist.jobs.jobstatus{jobindx};
+                end
+            else
+                jobURL = alljobs.joblist.jobs.jobstatus.selfUri.url;
+                jobstruct = alljobs.joblist.jobs.jobstatus;
+            end
         end
     end
 end
