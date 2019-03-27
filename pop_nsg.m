@@ -90,7 +90,7 @@ if nargin < 1
     clientjoburl = getjobnames(res); 
     jobnames     = nsg_getjobid(clientjoburl,1);
     cbautoscan  = '';
-    cbloadplot  = '';
+    cbloadplot  = 'pop_nsg(gcbf,''loadplot'');';
     cbcancel     = 'set(findobj(gcbf, ''tag'', ''runnsg''), ''userdata'', ''dummy'');'; % Setting a dummy change of userdata
     cblist       = 'pop_nsg(gcbf,''update'');';
     cbstdout     = 'pop_nsg(gcbf,''stdout'');';
@@ -123,7 +123,7 @@ if nargin < 1
                {'style'  'popupmenu'  'string' {'test.m'} 'tag' 'listbox_mfile'}...                          % Popup menu file to execute
                {'style'  'pushbutton' 'string' 'Test job locally' 'callback' cbtest}...                      % Button test
                {'style'  'text'       'string' 'NSG run options (see Help)'}...                              % Label Run options
-               {'style'  'edit'       'string' ' ' 'tag' 'edit_optinput'}...                                 % Edit run options                        
+               {'style'  'edit'       'string' ' ' 'tag' 'edit_runopt'}...                                   % Edit run options                        
                {'style'  'pushbutton' 'string' 'Help', 'tag' 'help' 'callback', 'pophelp(''pop_nsg'')' }...  % Button Help
                {'style'  'pushbutton' 'string' 'Cancel', 'tag' 'cc' 'callback' cbcancel} ...                 % Button Cancel
                {'style'  'pushbutton' 'string' 'Run job on NSG' 'tag' 'runnsg' 'callback' cbrun } };         % Button Run job                 
@@ -222,6 +222,8 @@ else
     end
     
     switch str
+        case 'loadplot'
+        case 'autoscan'    
         case 'rescan'
             res = nsg_jobs;
             clientjoburl = getjobnames(res);
