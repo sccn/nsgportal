@@ -36,12 +36,11 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-function res2 = nsg_jobs(jobname, filetype)
+function res2 = nsg_jobs(jobname, filetype, foldname)
 
 nsg_info;
-if nargin < 2
-    filetype = 'xml';
-end
+if ~exist('filetype', 'var'), filetype = 'xml'; end
+if ~exist('filename', 'var'), foldname = ''; end
 if nargin < 1
     command = sprintf('curl -u %s:%s -H cipres-appkey:%s "%s/job/%s?expand=true" > tmptxt.xml', nsgusername,  nsgpassword, nsgkey, nsgurl, nsgusername); % request full job status objects
     system(command);
@@ -61,9 +60,11 @@ else
         system(command);
         res2 = [ 'tmptxt.' filetype ];
     else
-        tmpval = fileparts(jobname);
-        tmpval = fileparts(tmpval);
-        [tmp, foldname] = fileparts(tmpval);
+        if isempty(foldname)
+            tmpval = fileparts(jobname);
+            tmpval = fileparts(tmpval);
+            [tmp, foldname] = fileparts(tmpval);
+        end
         
         tmpFolder = fullfile(outputfolder, foldname);
         currentFolder = pwd;
