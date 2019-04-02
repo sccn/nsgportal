@@ -223,6 +223,23 @@ else
     
     switch str
         case 'loadplot'
+               nsg_info;
+               resjob  = nsg_jobs([ jobstr '/output' ]);
+               if ~isempty(resjob.results.jobfiles)
+                   zipfilepos = find(cell2mat(cellfun(@(x) strcmp(x.parameterName,'outputfile'),resjob.results.jobfiles.jobfile,'UniformOutput',0)));
+                   [tmp, tmpval] = fileparts(resjob.results.jobfiles.jobfile{zipfilepos}.filename);
+                   [tmp, foldname] = fileparts(tmpval);
+                   tmpFolder = fullfile(outputfolder, foldname);
+                   if exist(tmpFolder,'dir')
+                       nsg_uilistfiles(tmpFolder,'oklabel', 'Load/plot' );
+                   else
+                       disp('pop_nsg: Unable to load/plot results. Results must be downloaded first');
+                       return;
+                   end
+               else
+                   disp('pop_nsg: Unable to load/plot results. Computation has not finished');
+                   return;
+               end           
         case 'autoscan'    
         case 'rescan'
             res = nsg_jobs;
@@ -319,9 +336,12 @@ else
             resjob  = nsg_jobs([ valargin '/output' ]);
             if ~isempty(resjob.results.jobfiles)
                 % Find zip file of results (name is not fixed anymore)
-                [trash, trash, exts] = cellfun(@(x) fileparts(x.filename),resjob.results.jobfiles.jobfile,'UniformOutput',0); 
-                zipfilepos = cell2mat(cellfun(@(x) strcmp(x,'.gz'),exts,'UniformOutput',0));
-                restmp  = nsg_jobs(resjob.results.jobfiles.jobfile{zipfilepos}.downloadUri.url, 'zip');
+                zipfilepos = find(cell2mat(cellfun(@(x) strcmp(x.parameterName,'outputfile'),resjob.results.jobfiles.jobfile,'UniformOutput',0)));
+                % Getting name of results file
+                [tmp, tmpval] = fileparts(resjob.results.jobfiles.jobfile{zipfilepos}.filename);
+                [tmp, foldname] = fileparts(tmpval);
+                % Pulling results
+                restmp  = nsg_jobs(resjob.results.jobfiles.jobfile{zipfilepos}.downloadUri.url, 'zip',foldname);
             else
                 restmp = 0;
             end
