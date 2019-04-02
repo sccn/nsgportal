@@ -25,6 +25,7 @@
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 function com = nsg_uilistfiles(pathname,varargin)
+com = '';
 
 tmp = dir(pathname);
 liststring = {tmp.name};
@@ -91,7 +92,6 @@ listobj  = findobj('tag', 'listboxvals');
 set(listobj,'callback', @clickcallback);
 okobj  = findobj('tag', 'buttonok');
 set(okobj,'callback', g.okcallback);
-
 end
 
 % AUX functions
@@ -156,13 +156,15 @@ tmpformats = imformats;
 imfileext = cellfun(@(x) x{:},{tmpformats.ext},'UniformOutput',0);
 
 switch ext(2:end)
-    case '.fig'
+    case 'fig'
         openfig(filefull);
     case imfileext
         img = imread(filefull);
         figure; imshow(img);
-    case '.set'  
-    % TBD
+    case 'set'
+        evalin('base', sprintf(['EEG = pop_loadset(''filename'', ''%s'',''filepath'',''%s'');[ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, length(ALLEEG)+1); CURRENTSET = length(ALLEEG);'],filename,filepath ));
+    case 'mat'
+        evalin('base','load(filefull)');
     otherwise
         disp('pop_nsg: Not a valid file extension');
 end
