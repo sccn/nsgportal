@@ -78,7 +78,7 @@ try g.listvalue;        catch, g.listvalue       = 1 ;          end
 try g.jobid;            catch, g.jobid           = '';          end
 try g.outfile;          catch, g.outfile         = '';          end % Default defined in nsg_run
 try g.runtime;          catch, g.runtime         = 0.5;         end
-try g.filename;         catch, g.filename        = 'test.m';    end
+try g.filename;         catch, g.filename        = '';          end
 try g.subdirname;       catch, g.subdirname      = '';          end
 
 if nargin < 1
@@ -99,7 +99,7 @@ if nargin < 1
     cbtest       = 'pop_nsg(gcbf,''testgui'');';
     cboutput     = 'pop_nsg(gcbf,''outputgui'');';
     cdelete      = 'pop_nsg(gcbf,''deletegui'');';
-    cbrun        = 'pop_nsg(gcbf,''rungui'',eval( [ ''{'' get(findobj(gcf,''tag'',''edit_runopt''),''string'') ''}'' ] ));'; %cbrun       = 'pop_nsg(gcbf,''rungui'',);';
+    cbrun        = 'pop_nsg(gcbf,''rungui'',eval( [ ''{'' get(findobj(gcf,''tag'',''edit_runopt''),''string'') ''}'' ] ));';
     cbsetmfile   = 'jobfile = get(findobj(gcbf,''tag'',''fileorfolder''),''String''); mfilelist = '' '';if ~isempty(jobfile),if isdir(jobfile),mfilestmp = dir(fullfile(jobfile, ''*.m''));if ~isempty(mfilestmp), mfilelist = {mfilestmp.name}; end;else,mfilelist = listzipcontents(jobfile, ''.m'');if isempty(mfilelist), mfilelist = '' ''; end; end;set(findobj(gcbf,''tag'',''listbox_mfile''),''string'',mfilelist,''Value'', 1);end;clear pathname filename;';
     cbload       =  ['ButtonName = questdlg2(''Do you want to load a ZIP file or a folder?'',''pop_nsg'',''Folder'', ''ZIP File'', ''ZIP File'');if strcmpi(ButtonName, ''zip file''),[filename pathname] = uigetfile({''*.zip'' ''*.ZIP''});if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', fullfile(pathname, filename));end;else,pathname = uigetdir();if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', pathname);end;end;' cbsetmfile];
     joblog       = char(ones(7,70)*' ');
@@ -185,7 +185,9 @@ else
         joblist = get(findobj(fig, 'tag', 'joblist'), 'string');
         jobval  = get(findobj(fig, 'tag', 'joblist'), 'value');
         tmplist = get(findobj(fig, 'tag', 'listbox_mfile'), 'string');
-        if any(strcmp(str,{'run', 'test'}))
+        
+        % Def .m file to run
+        if any(strcmp(str,{'rungui', 'test'}))
             % mfiles
             if ~isempty(deblank(tmplist))
                 g.filename  = tmplist{get(findobj(fig, 'tag', 'listbox_mfile'), 'value')}; % Updating mfile
@@ -240,7 +242,8 @@ else
                    disp('pop_nsg: Unable to load/plot results. Computation has not finished');
                    return;
                end           
-        case 'autoscan'    
+        case 'autoscan'
+            
         case 'rescan'
             res = nsg_jobs;
             clientjoburl = getjobnames(res);
