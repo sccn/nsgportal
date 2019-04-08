@@ -9,7 +9,7 @@
 %   trystrs    - [struct]  "try" strings for menu callbacks. See notes. 
 %   catchstrs  - [struct]  "catch" strings for menu callbacks. See notes. 
 %
-% Author: Arnaud Delorme, SCCN, INC, UCSD, 2018
+% Author: Arnaud Delorme, Ramon Martinez-Cancino SCCN, INC, UCSD, 2018
 %
 % See also: eeglab()
 
@@ -68,7 +68,9 @@ function vers = eegplugin_nsgportal(fig, trystrs, catchstrs)
     
     % create menus
     % ------------
-    submenu = uimenu( menu, 'Label', 'Send to NSG portal');
+    submenu = uimenu( menu, 'Label', 'NSG portal');
+    set(menu, 'enable', 'on', 'userdata', 'startup:on;study:on');
     uimenu( submenu, 'Label', 'Change NSG portal settings and credentials', 'CallBack', cominfo);
     uimenu( submenu, 'Label', 'Execute EEGLAB scripts on NSG portal', 'CallBack', comnsg);
+    
  
