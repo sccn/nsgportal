@@ -11,7 +11,7 @@
 %                 structure  provided as argument
 %   'delete'    - Delete job  associated to job identifier or job structure 
 %                 provided as argument
-%   'run'       - Submit .zip or folder provided as argument to run on NSG
+%   'run'       - Submit .zip or folder provided as argument to run on NSG.
 % 
 % Optional inputs:
 %   'jobid'           - String with the client job id. This was assigned to the
@@ -78,19 +78,19 @@ try g.listvalue;        catch, g.listvalue       = 1 ;          end
 try g.jobid;            catch, g.jobid           = '';          end
 try g.outfile;          catch, g.outfile         = '';          end % Default defined in nsg_run
 try g.runtime;          catch, g.runtime         = 0.5;         end
-try g.filename;         catch, g.filename        = '';          end
+try g.filename;         catch, g.filename        = {''};        end
 try g.subdirname;       catch, g.subdirname      = '';          end
 
 if nargin < 1
+    % Callbacks
     res = nsg_jobs;
     if isfield(res, 'error')
         errordlg2(res.error.message);
         error(res.error.message);
     end
-    clientjoburl = getjobnames(res); 
-    jobnames     = nsg_getjobid(clientjoburl,1);
-    cbautoscan  = '';
-    cbloadplot  = 'pop_nsg(gcbf,''loadplot'');';
+    jobnames     = formatlistjob(res);
+    cbautoscan   = '';
+    cbloadplot   = 'pop_nsg(gcbf,''loadplot'');';
     cbcancel     = 'set(findobj(gcbf, ''tag'', ''runnsg''), ''userdata'', ''dummy'');'; % Setting a dummy change of userdata
     cblist       = 'pop_nsg(gcbf,''update'');';
     cbstdout     = 'pop_nsg(gcbf,''stdout'');';
@@ -101,65 +101,90 @@ if nargin < 1
     cdelete      = 'pop_nsg(gcbf,''deletegui'');';
     cbrun        = 'pop_nsg(gcbf,''rungui'',eval( [ ''{'' get(findobj(gcf,''tag'',''edit_runopt''),''string'') ''}'' ] ));';
     cbsetmfile   = 'jobfile = get(findobj(gcbf,''tag'',''fileorfolder''),''String''); mfilelist = '' '';if ~isempty(jobfile),if isdir(jobfile),mfilestmp = dir(fullfile(jobfile, ''*.m''));if ~isempty(mfilestmp), mfilelist = {mfilestmp.name}; end;else,mfilelist = listzipcontents(jobfile, ''.m'');if isempty(mfilelist), mfilelist = '' ''; end; end;set(findobj(gcbf,''tag'',''listbox_mfile''),''string'',mfilelist,''Value'', 1);end;clear pathname filename;';
-    cbload       =  ['ButtonName = questdlg2(''Do you want to load a ZIP file or a folder?'',''pop_nsg'',''Folder'', ''ZIP File'', ''ZIP File'');if strcmpi(ButtonName, ''zip file''),[filename pathname] = uigetfile({''*.zip'' ''*.ZIP''});if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', fullfile(pathname, filename));end;else,pathname = uigetdir();if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', pathname);end;end;' cbsetmfile];
+    cbsetjobid   = 'if ~isequal(pathname, 0), [tmp, filenamenoext]= fileparts(filename); set(findobj(gcf,''tag'',''edit_jobid''),''string'',[filenamenoext num2str(ceil(1000*rand(1)))]);clear filenamenoext;end;';
+    cbload       =  ['ButtonName = questdlg2(''Do you want to load a ZIP file or a folder?'',''pop_nsg'',''Folder'', ''ZIP File'', ''ZIP File'');if strcmpi(ButtonName, ''zip file''),[filename pathname] = uigetfile({''*.zip'' ''*.ZIP''});if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', fullfile(pathname, filename));end;else,pathname = uigetdir();if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', pathname);end;end;' cbsetjobid cbsetmfile];
+    cbmfileset   =  'jobfile = get(findobj(gcbf,''tag'',''fileorfolder''),''String'');if ~isempty(jobfile), [tmp, filenamenoext]=fileparts(jobfile); set(findobj(gcf,''tag'',''edit_jobid''),''string'',[filenamenoext num2str(ceil(1000*rand(1)))]);clear filenamenoext;end;';
     joblog       = char(ones(7,70)*' ');
     
-    uilist = { { 'style' 'text'       'string' 'Select job' 'fontweight' 'bold' }...                         % Label Select job
-               { 'style' 'pushbutton' 'string' 'Rescan NSG jobs' 'callback' cdrescan }...                    % Button rescan
-               { 'style' 'pushbutton' 'string' 'Auto scan' 'callback' cbautoscan }...                        % Button autoscan
-               { 'style' 'pushbutton' 'string' 'Delete this NSG job' 'callback' cdelete } ...                % Button delete
-               { 'style' 'listbox'    'string' jobnames 'tag' 'joblist' 'callback' cblist}...                % List jobs
-               { 'style' 'pushbutton' 'string' 'View job output log' 'callback' cbstdout } ...               % Button output log
-               { 'style' 'pushbutton' 'string' 'View job error log' 'callback' cbstderr } ...                % Button error log
-               { 'style' 'pushbutton' 'string' 'Download job results' 'callback' cboutput }...               % Button download log
-               { 'style' 'pushbutton' 'string' 'Load/plot results' 'callback' cbloadplot }...                % Button plot
-               { 'style' 'text'       'string' 'NSG job status' 'fontweight' 'bold' }...                     % Label Status
-               { 'style' 'text'       'string' joblog 'tag' 'joblog' }...                                    % List Joblog
-               { 'style' 'text'       'string' 'Submit new NSG job' 'fontweight' 'bold' } ...                % Label submit
-               { 'style' 'text'       'string' 'Job folder or .zip file' } ...                               % Label select file 
-               { 'style' 'edit'       'string' '' 'tag' 'fileorfolder' } ...                                 % Edit Filepath
-               { 'style' 'pushbutton' 'string' '...'    'callback' cbload }...                               % Button load file
-               { 'style' 'text'       'string' 'Matlab script to execute'}...                                % Label File to execute
-               {'style'  'popupmenu'  'string' {'test.m'} 'tag' 'listbox_mfile'}...                          % Popup menu file to execute
-               {'style'  'pushbutton' 'string' 'Test job locally' 'callback' cbtest}...                      % Button test
-               {'style'  'text'       'string' 'NSG run options (see Help)'}...                              % Label Run options
-               {'style'  'edit'       'string' ' ' 'tag' 'edit_runopt'}...                                   % Edit run options                        
-               {'style'  'pushbutton' 'string' 'Help', 'tag' 'help' 'callback', 'pophelp(''pop_nsg'')' }...  % Button Help
-               {'style'  'pushbutton' 'string' 'Cancel', 'tag' 'cc' 'callback' cbcancel} ...                 % Button Cancel
-               {'style'  'pushbutton' 'string' 'Run job on NSG' 'tag' 'runnsg' 'callback' cbrun } };         % Button Run job                 
+    % Tooltips
+    ttjobs   = 'List of all jobs under your username in NSG';
+    ttrefresh = 'Refresh the list of all jobs';
+    ttdelete  = 'Delete current job';
+    ttoutlog  = 'Download and display MATLAB messages for the current job';
+    tterrlog  = 'Download and display MATLAB errors for the current job';
+    ttresults = 'Download results from current job';
+    ttload    = 'Launch GUI for loading and displaying results for current job';
+    ttfile    = 'Full path to the zip file or folder of job to submitt to NSG';
+    ttbrowse  = 'Browse zip file or folder of job to submitt to NSG';
+    ttmatfile = 'Script to execute on job submission';
+    tttest    = ['Test job locally on your computer.' , char(10), ...
+                 'Make sure to test a downscaled version of the job (e.g., Use a different script)'];
+    ttjobid   = 'Unique identifier for the job. We highly recommended to modify this field';
+    ttopts    = 'NSG options for the job about to submitt. See pop_nsg help';
+    ttrun     = 'Submit job to NSG';
     
-    ht = 17; wt = 7.5;
-    horzspan  = 1.8; vertspam = 1.1; c1 = 0.9; c2 = 2.55; c3 = 5.2; c4 = 6.8;    
-    geom = { {wt ht [c2 0]      [1 vertspam]   } ...      % Label Select job
+    % GUI components
+    uilist = { { 'style' 'text'       'string' 'Select job' 'fontweight' 'bold' 'TooltipString' ttjobs} ...                            % Label Select job
+               { 'style' 'pushbutton' 'string' 'Refresh job list' 'callback' cdrescan 'TooltipString' ttrefresh }...                   % Button rescan
+               { 'style' 'pushbutton' 'string' 'Auto scan' 'callback' cbautoscan }...                                                  % Button autoscan
+               { 'style' 'pushbutton' 'string' 'Delete this NSG job' 'callback' cdelete 'TooltipString' ttdelete} ...                  % Button delete
+               { 'style' 'listbox'    'string' jobnames 'tag' 'joblist' 'callback' cblist 'TooltipString' ttjobs}...                   % List jobs
+               { 'style' 'pushbutton' 'string' 'MATLAB output log' 'callback' cbstdout 'TooltipString' ttoutlog} ...                   % Button output log
+               { 'style' 'pushbutton' 'string' 'MATLAB error log' 'callback' cbstderr 'TooltipString' tterrlog} ...                    % Button error log
+               { 'style' 'pushbutton' 'string' 'Download job results' 'callback' cboutput 'TooltipString' ttresults}...                % Button download log
+               { 'style' 'pushbutton' 'string' 'Load/plot results' 'callback' cbloadplot 'TooltipString' ttload}...                    % Button plot
+               { 'style' 'text'       'string' 'NSG job status' 'fontweight' 'bold' }...                                               % Label Status
+               { 'style' 'text'       'string' joblog 'tag' 'joblog' }...                                                              % List Joblog
+               { 'style' 'text'       'string' 'Submit new NSG job' 'fontweight' 'bold' } ...                                          % Label submit
+               { 'style' 'text'       'string' 'Job folder or .zip file' 'TooltipString' ttfile} ...                                   % Label select file 
+               { 'style' 'edit'       'string' '' 'tag' 'fileorfolder' 'TooltipString' ttfile} ...                                     % Edit Filepath
+               { 'style' 'pushbutton' 'string' 'Browse...'    'callback' cbload 'TooltipString' ttbrowse}...                           % Button load file
+               { 'style' 'text'       'string' 'Matlab script to execute' 'TooltipString' ttmatfile}...                                % Label File to execute
+               {'style'  'popupmenu'  'string' g.filename 'tag' 'listbox_mfile' 'callback' cbmfileset 'TooltipString' ttmatfile}...    % Popup menu file to execute
+               {'style'  'pushbutton' 'string' 'Test job locally' 'callback' cbtest 'TooltipString' tttest}...                         % Button test
+               {'style'  'text'       'string' 'Job ID (default or custom)' 'TooltipString' ttjobid}...                                % Label Job ID
+               {'style'  'edit'       'string' ' ' 'tag' 'edit_jobid' 'TooltipString' ttopts}...                                       % Edit  Job ID
+               {'style'  'text'       'string' 'NSG run options (see Help)' 'TooltipString' ttopts}...                                 % Label Run options
+               {'style'  'edit'       'string' ' ' 'tag' 'edit_runopt'}...                                                             % Edit run options                        
+               {'style'  'pushbutton' 'string' 'Help', 'tag' 'help' 'callback', 'pophelp(''pop_nsg'')' }...                            % Button Help
+               {'style'  'pushbutton' 'string' 'Close', 'tag' 'cc' 'callback' cbcancel} ...                                            % Button Cancel
+               {'style'  'pushbutton' 'string' 'Run job on NSG' 'tag' 'runnsg' 'callback' cbrun  'TooltipString', ttrun} };            % Button Run job                 
+    
+    ht = 20; wt = 7.5;
+    horzspan  = 1.8; vertspam = 1.2; c1 = 0.9; c2 = 2.55; c3 = 5.2; c4 = 6.8;    
+    geom = { {wt ht [c2 0]      [1 vertspam]   } ...       % Label Select job
              {wt ht [c1 1]      [horzspan vertspam] } ...  % Button rescan
              {wt ht [c1 2.33]   [horzspan vertspam] }...   % Button autoscan
              {wt ht [c1 5]      [horzspan vertspam] }...   % Button delete
-             {wt ht [c2 1]      [4.4 5]   } ...           % List jobs
+             {wt ht [c2 1]      [4.4 5]   } ...            % List jobs
              {wt ht [c4 1]      [horzspan vertspam] } ...  % Button output log
              {wt ht [c4 2.33]   [horzspan vertspam] }...   % Button error log
              {wt ht [c4 3.66]   [horzspan vertspam] }...   % Button download log
              {wt ht [c4 5]      [horzspan vertspam] }...   % Button download log
              {wt ht [c1 6.3]    [horzspan vertspam] }...   % Label Status
-             {wt ht [c2 6]      [5 5]   }...              % List Joblog
+             {wt ht [c2 6]      [5 5.8]   }...             % List Joblog
              {wt ht [c1 11]     [horzspan vertspam] } ...  % Label submit
              {wt ht [c1 12]     [horzspan vertspam] } ...  % Label select file 
-             {wt ht [c2 12]     [4.4 vertspam] } ...      % Edit Filepath
+             {wt ht [c2 12]     [4.4 vertspam] } ...       % Edit Filepath
              {wt ht [c4 12]     [horzspan vertspam] }...   % Button load file
              {wt ht [c1 13.3]   [horzspan vertspam] } ...  % Label File to execute
-             {wt ht [c2 13.3]   [3 vertspam] } ...        % Popup menu file to execute
+             {wt ht [c2 13.3]   [3 vertspam] } ...         % Popup menu file to execute
              {wt ht [c4 13.3]   [horzspan vertspam] }...   % Button test
-             {wt ht [c1 15]     [horzspan vertspam] } ...  % Label Run options
-             {wt ht [c2 15]     [4.4 vertspam] } ...      % Edit run options
-             {wt ht [c1 17]     [horzspan vertspam] } ...  % Button Help
-             {wt ht [c3 17]     [horzspan vertspam] } ...  % Button Cancel
-             {wt ht [c4 17]     [horzspan vertspam] }};    % Button Run job
+             {wt ht [c1 14.6]   [horzspan vertspam] } ...  % Label Job ID
+             {wt ht [c2 14.6]   [3 vertspam] } ...         % Edit Job ID
+             {wt ht [c1 16.5]   [horzspan vertspam] } ...  % Label Run options
+             {wt ht [c2 16.5]   [4.4 vertspam] } ...       % Edit run options
+             {wt ht [c1 20]     [horzspan vertspam] } ...  % Button Help
+             {wt ht [c4 20]     [horzspan vertspam] } ...  % Button Cancel
+             {wt ht [c2 17.7]   [horzspan 1.5*vertspam] }};% Button Run job
          
     for i = 1:length(geom), geom{i}{3} = geom{i}{3}-1; end 
     
     % GUI setup
     fig = figure('visible', 'off','Units', 'Normalized'); 
     supergui('fig', fig, 'geom', geom, 'uilist', uilist, 'userdata', '', 'title' , 'NSG-R Matlab/EEGLAB interface -- pop_nsg()');
-    set(fig, 'Units', 'Normalized', 'Position',[0.2750 0.3204 0.3990 0.5389],'visible', 'on');      
+    figpos = get(fig, 'Position');
+    set(fig, 'Units', 'Normalized', 'Position',[figpos(1) figpos(2) 0.3990 0.5389],'visible', 'on');
     pop_nsg(fig, 'update');
     
     % Wait for cancel, grab list position and close the GUI
@@ -180,6 +205,7 @@ if nargin < 1
      end
      
 else
+    % GUI calls
     if ishandle(fig)
         newjob  = get(findobj(fig, 'tag', 'fileorfolder'), 'string');
         joblist = get(findobj(fig, 'tag', 'joblist'), 'string');
@@ -190,17 +216,20 @@ else
         if any(strcmp(str,{'rungui', 'test'}))
             % mfiles
             if ~isempty(deblank(tmplist))
-                g.filename  = tmplist{get(findobj(fig, 'tag', 'listbox_mfile'), 'value')}; % Updating mfile
+                g.filename = tmplist{get(findobj(fig, 'tag', 'listbox_mfile'), 'value')}; % Updating mfile
+                g.jobid    = get(findobj(fig, 'tag', 'edit_jobid'), 'string');
             else
                 warndlg2('Select MATLAB script to execute'); return;
             end            
         end
         
         if ~isempty(joblist)
-            if ischar(joblist), joblist = {joblist}; end
+            if ischar(joblist), joblist = {joblist(38:end-7)}; end % Here taking only jobid and exludcing HTML formating
             for ijobs =1:length(joblist)
-                if ~isnsgurl(joblist{ijobs})
-                    joblist{ijobs} = nsg_findclientjoburl(joblist{ijobs});
+                if ~isnsgurl(joblist{ijobs}(38:end-7))
+                    joblist{ijobs} = nsg_findclientjoburl(joblist{ijobs}(38:end-7));
+                else
+                    joblist{ijobs} = joblist{ijobs}(38:end-7);
                 end
             end
             jobstr = joblist{jobval};            
@@ -209,7 +238,9 @@ else
         end
         
         % For com output
-        userdat = get(fig,'userdata');      
+        userdat = get(fig,'userdata'); 
+        
+    % Command line calls    
     else
         if isstruct(str) 
             if isfield(str,'selfUri')
@@ -220,7 +251,7 @@ else
         else
             valargin = str;
         end
-        str = fig;
+        str = fig; % Here fig is the input.
     end
     
     switch str
@@ -243,11 +274,18 @@ else
                    return;
                end           
         case 'autoscan'
+%             res = nsg_jobs;
+%             t = timer;
+%             t.TimerFcn = @(~,~)pop_nsg(fig, 'rescan');
+%             t.Period =  g.period;
+%             t.ExecutionMode = 'fixedRate';
+%             t.TasksToExecute = Inf;
+%             t.BusyMode = 'queue';
+%             start(t)
             
         case 'rescan'
             res = nsg_jobs;
-            clientjoburl = getjobnames(res);
-            jobnames = nsg_getjobid(clientjoburl,1);
+            jobnames = formatlistjob(res);
             set(findobj(fig, 'tag', 'joblist'), 'value', g.listvalue, 'string', jobnames);
             pop_nsg(fig, 'update');
             
@@ -287,7 +325,7 @@ else
                     end
                 end
                 jobtxt = strvcat(jobtxt{:});
-                set(findobj(fig, 'tag', 'joblog'), 'string', jobtxt);
+                set(findobj(fig, 'tag', 'joblog'), 'string', jobtxt);            
             end
 
         case 'stdout'
@@ -374,13 +412,33 @@ else
         case 'rungui' 
              if isempty(newjob)
                 warndlg2('Empty input');
-             else   
-                tmpparams = eval( [ '{' get(findobj(gcf,'tag','edit_runopt'),'string') '}' ] );
+             else  
+                 % Retreive parameters
+                tmpoptparams   = eval( [ '{' get(findobj(gcf,'tag','edit_runopt'),'string') '}' ] );
+                tmpparams_name = tmpoptparams(1:2:end);
+                
+                % Update parameters here
+                c =1;
+                for i = 1: length(tmpparams_name)
+                    g.(tmpparams_name{i}) =  tmpoptparams{c+1};
+                    c = c+2;
+                end
+                
+                nsgrunoptname  = {'jobid' 'outfile' 'runtime' 'filename' 'subdirname'};
+                c = 1;
+                for i = 1:length(nsgrunoptname)
+                    tmpparams{c} = nsgrunoptname{i};
+                    tmpparams{c+1} = g.(nsgrunoptname{i});
+                    c = c+2;
+                end
+                
                 pop_nsg('run', newjob, tmpparams{:});
                 if iscell(get(findobj(gcf,'tag','joblist'),'string'))
                     listpos = length(get(findobj(gcf,'tag','joblist'),'string'))+1;
                 elseif ~isempty(get(findobj(gcf,'tag','joblist'),'string'))
                     listpos = 2;
+                else
+                    listpos = 1;
                 end               
                 pop_nsg(fig, 'rescan','listvalue',listpos);
              end    
@@ -438,5 +496,40 @@ if length(urlcheck)>= 20
     urlflag =fastif(strcmp('https://nsgr.sdsc.edu',urlcheck(1:21)),1,0);  
 else
     urlflag = 0;
+end
+end
+
+function jobnameout = formatlistjob(res)
+jobnameout = [];
+
+clientjoburl = getjobnames(res);
+jobnames = nsg_getjobid(clientjoburl,1);
+
+if ischar(jobnames), jobnames = {jobnames}; end
+for i = 1:length(jobnames)
+    
+    if length(jobnames)==1
+        if iscell(res.joblist.jobs.jobstatus.messages.message)
+            stage = res.joblist.jobs.jobstatus.messages.message{end}.stage;
+        else
+            stage = res.joblist.jobs.jobstatus.messages.message.stage;
+        end
+        failflag = res.joblist.jobs.jobstatus.failed;
+    else
+        if iscell(res.joblist.jobs.jobstatus{i}.messages.message)
+            stage = res.joblist.jobs.jobstatus{i}.messages.message{end}.stage;
+        else
+            stage = res.joblist.jobs.jobstatus{i}.messages.message.stage;
+        end
+        failflag = res.joblist.jobs.jobstatus{i}.failed;
+    end
+    
+    if strcmpi(stage, 'completed')
+        jobnameout{i} = ['<html><font size=+0 color="#00cc00"> ' jobnames{i} '</html>'];
+    elseif strcmp(failflag, 'true')
+        jobnameout{i} = ['<html><font size=+0 color="#4d94ff"> ' jobnames{i} '</html>'];
+    else
+        jobnameout{i} =['<html><font size=+0 color="#66b3ff"> ' jobnames{i} '</html>'];
+    end
 end
 end
