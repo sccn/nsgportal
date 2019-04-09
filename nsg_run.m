@@ -46,8 +46,6 @@
 function jobURL = nsg_run(joblocation, varargin)
 jobURL = [];
 
-[trash, jobname] = fileparts(joblocation);
-default_outfile = ['nsgresults_' jobname];
 try
     options = varargin;
     if ~isempty( varargin )
@@ -58,11 +56,11 @@ try
 catch
     disp('nsg_run() error: calling convention {''key'', value, ... } error'); return;
 end
-try g.jobid; assert(~isempty(g.jobid));       catch, g.jobid           = randi(10000);            end  
-try g.outfile; assert(~isempty(g.outfile));   catch, g.outfile         = default_outfile;         end
-try g.runtime;                                catch, g.runtime         = 0.5;                     end
-try g.filename;                               catch, g.filename        = '';                      end
-try g.subdirname;                             catch, g.subdirname      = '';                      end
+try g.jobid; assert(~isempty(g.jobid));       catch, g.jobid           = randi(10000);             end  
+try g.outfile; assert(~isempty(g.outfile));   catch, g.outfile         = ['nsgresults_' g.jobid];  end
+try g.runtime;                                catch, g.runtime         = 0.5;                      end
+try g.filename;                               catch, g.filename        = '';                       end
+try g.subdirname;                             catch, g.subdirname      = '';                       end
 
 if isempty(g.filename)
     disp('nsg_run: Property filename must be provided'); 
