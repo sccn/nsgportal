@@ -132,6 +132,11 @@ if nargin < 1
                { 'style' 'pushbutton' 'string' 'MATLAB error log' 'tag' 'errorlog' 'callback' cbstderr 'TooltipString' tterrlog} ...      % Button error log
                { 'style' 'pushbutton' 'string' 'Download job results' 'tag' 'download' 'callback' cboutput 'TooltipString' ttresults}...  % Button download log
                { 'style' 'pushbutton' 'string' 'Load/plot results' 'tag' 'loadplot' 'callback' cbloadplot 'TooltipString' ttload}...      % Button plot
+               { 'style' 'text'       'string'  'Job color legend:'          'Tag' 'legend0'} ...                        % legend 0
+               { 'style' 'text'       'string'  [char(8226) ' Completed']    'Tag' 'legend1'} ...                        % legend 1    
+               { 'style' 'text'       'string'  [char(8226) ' Processing']   'Tag' 'legend2'} ...                        % legend 2
+               { 'style' 'text'       'string'  [char(8226) ' MATLAB Error'] 'Tag' 'legend3'} ...                        % legend 3
+               { 'style' 'text'       'string'  [char(8226) ' NSG Error']    'Tag' 'legend4'} ...                        % legend 4
                { 'style' 'text'       'string' 'NSG job status' 'fontweight' 'bold' }...                                                  % Label Status
                { 'style' 'text'       'string' ' ' 'tag' 'jobstatus'}...                                                                  % Text job Status
                { 'style' 'text'       'string' joblog 'tag' 'joblog' }...                                                                 % List Joblog
@@ -150,33 +155,38 @@ if nargin < 1
                {'style'  'pushbutton' 'string' 'Close', 'tag' 'cc' 'callback' cbcancel} ...                                               % Button Cancel
                {'style'  'pushbutton' 'string' 'Run job on NSG' 'tag' 'runnsg' 'callback' cbrun  'TooltipString', ttrun} };               % Button Run job                 
     
-    ht = 20.5; wt = 7.5;
+    ht = 20.6; wt = 7.5;
     horzspan  = 1.8; vertspam = 1.2; c1 = 0.9; c2 = 2.55; c3 = 5.2; c4 = 6.8;    
-    geom = { {wt ht [c2 0]      [1 vertspam]   } ...        % Label Select job
-             {wt ht [c1 1]      [horzspan vertspam] } ...   % Button rescan
-             {wt ht [c1 5]      [horzspan vertspam] }...    % Button delete
-             {wt ht [c2 1]      [4.4 5]   } ...             % List jobs
-             {wt ht [c4 1]      [horzspan vertspam] } ...   % Button output log
-             {wt ht [c4 2.33]   [horzspan vertspam] }...    % Button error log
-             {wt ht [c4 3.66]   [horzspan vertspam] }...    % Button download log
-             {wt ht [c4 5]      [horzspan vertspam] }...    % Button download log
-             {wt ht [c1 6.3]    [horzspan vertspam] }...    % Label Status
-             {wt ht [c2 6.3]    [horzspan vertspam] }...    % Text Job Status
-             {wt ht [c2 6.8]    [5 6.2]   }...              % List Joblog
-             {wt ht [c1 11.6]   [horzspan vertspam] } ...   % Label submit
-             {wt ht [c1 12.6]   [horzspan vertspam] } ...   % Label select file 
-             {wt ht [c2 12.6]   [4.4 vertspam] } ...        % Edit Filepath
-             {wt ht [c4 12.6]   [horzspan vertspam] }...    % Button load file
-             {wt ht [c1 13.9]   [horzspan vertspam] } ...   % Label File to execute
-             {wt ht [c2 13.9]   [3 vertspam] } ...          % Popup menu file to execute
-             {wt ht [c4 13.9]   [horzspan vertspam] }...    % Button test
-             {wt ht [c1 15.2]   [horzspan vertspam] } ...   % Label Job ID
-             {wt ht [c2 15.2]   [3 vertspam] } ...          % Edit Job ID
-             {wt ht [c1 17.1]   [horzspan vertspam] } ...   % Label Run options
-             {wt ht [c2 17.1]   [4.4 vertspam] } ...        % Edit run options
-             {wt ht [c1 20.5]   [horzspan vertspam] } ...   % Button Help
-             {wt ht [c4 20.5]   [horzspan vertspam] } ...   % Button Cancel
-             {wt ht [c2 18.3]   [horzspan 1.5*vertspam] }}; % Button Run job
+    geom = { {wt ht [c2 0]        [1 vertspam]   } ...        % Label Select job
+             {wt ht [c1 1]        [horzspan vertspam] } ...   % Button rescan
+             {wt ht [c1 5]        [horzspan vertspam] }...    % Button delete
+             {wt ht [c2 1]        [4.4 5]   } ...             % List jobs
+             {wt ht [c4 1]        [horzspan vertspam] } ...   % Button output log
+             {wt ht [c4 2.33]     [horzspan vertspam] }...    % Button error log
+             {wt ht [c4 3.66]     [horzspan vertspam] }...    % Button download log
+             {wt ht [c4 5]        [horzspan vertspam] }...    % Button plot
+             {wt ht [c2 5.6]      [horzspan vertspam] }...    % Legend 0
+             {wt ht [c2+1 5.6]    [horzspan vertspam] }...    % Legend 1
+             {wt ht [c2+1.75 5.6] [horzspan vertspam] }...    % Legend 2
+             {wt ht [c2+2.55 5.6] [horzspan vertspam] }...    % Legend 3
+             {wt ht [c2+3.5 5.6]  [horzspan vertspam] }...    % Legend 4
+             {wt ht [c1 6.4]      [horzspan vertspam] }...    % Label Status
+             {wt ht [c2 6.4]      [horzspan vertspam] }...    % Text Job Status
+             {wt ht [c2 6.9]      [5 6.2]   }...              % List Joblog
+             {wt ht [c1 11.7]     [horzspan vertspam] } ...   % Label submit
+             {wt ht [c1 12.7]     [horzspan vertspam] } ...   % Label select file 
+             {wt ht [c2 12.7]     [4.4 vertspam] } ...        % Edit Filepath
+             {wt ht [c4 12.7]     [horzspan vertspam] }...    % Button load file
+             {wt ht [c1 14]     [horzspan vertspam] } ...   % Label File to execute
+             {wt ht [c2 14]     [3 vertspam] } ...          % Popup menu file to execute
+             {wt ht [c4 14]     [horzspan vertspam] }...    % Button test
+             {wt ht [c1 15.3]     [horzspan vertspam] } ...   % Label Job ID
+             {wt ht [c2 15.3]     [3 vertspam] } ...          % Edit Job ID
+             {wt ht [c1 17.2]     [horzspan vertspam] } ...   % Label Run options
+             {wt ht [c2 17.2]     [4.4 vertspam] } ...        % Edit run options
+             {wt ht [c1 20.6]     [horzspan vertspam] } ...   % Button Help
+             {wt ht [c4 20.6]     [horzspan vertspam] } ...   % Button Cancel
+             {wt ht [c2 18.4]     [horzspan 1.5*vertspam] }}; % Button Run job
          
     for i = 1:length(geom), geom{i}{3} = geom{i}{3}-1; end 
     
@@ -185,6 +195,13 @@ if nargin < 1
     supergui('fig', fig, 'geom', geom, 'uilist', uilist, 'userdata', '', 'title' , 'NSG-R Matlab/EEGLAB interface -- pop_nsg()');
     figpos = get(fig, 'Position');
     set(fig, 'Units', 'Normalized', 'Position',[figpos(1) figpos(2) 0.3990 0.5389],'visible', 'on');
+    % Color of text
+    set(findobj('Tag', 'legend1'), 'ForegroundColor',  [0 1 0]);
+    set(findobj('Tag', 'legend2'), 'ForegroundColor',  [0.1172    0.5625    1.0000]);
+    set(findobj('Tag', 'legend3'), 'ForegroundColor',  [0.6953    0.1328    0.1328]);
+    set(findobj('Tag', 'legend4'), 'ForegroundColor',  [1.0000    0.2695         0]);
+  
+    
     pop_nsg(fig, 'update');
     
     % Wait for cancel, grab list position and close the GUI
@@ -547,7 +564,7 @@ for i = 1:length(jobnames)
     elseif strcmp(failflag, 'true')
         jobnameout{i} = ['<html><font size=+0 color="#4d94ff"> ' jobnames{i} '</html>'];
     else
-        jobnameout{i} =['<html><font size=+0 color="#66b3ff"> ' jobnames{i} '</html>'];
+        jobnameout{i} =['<html><font size=+0 color="#4d94ff"> ' jobnames{i} '</html>'];
     end
 end
 end
