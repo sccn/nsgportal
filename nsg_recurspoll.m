@@ -55,7 +55,7 @@ try g.pollinterval;     catch, g.pollinterval= 450 ;       end
 try g.verbose;          catch, g.verbose = 1 ;              end
 
 if g.pollinterval<1800
-    disp(['nsg_recurspoll: Invalid polling interval. This parameter shuld be higher that 450.' char(10)...
+    disp(['nsg_recurspoll: Invalid polling interval. This parameter should be higher that 450 (sec).' char(10)...
           '                Please, keep polling frequency as low as possible to avoid overloading NSG']);
 end
 
