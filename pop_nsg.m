@@ -81,6 +81,11 @@ try g.runtime;          catch, g.runtime         = 0.5;         end
 try g.filename;         catch, g.filename        = {''};        end
 try g.subdirname;       catch, g.subdirname      = '';          end
 
+% Internet checking
+if ~nsg_checknet
+    error('pop_nsg: Unable to establish a connection to ''www.nsgportal.org'' ');
+end
+
 if nargin < 1
     % Callbacks
     res = nsg_jobs;
@@ -132,11 +137,11 @@ if nargin < 1
                { 'style' 'pushbutton' 'string' 'MATLAB error log' 'tag' 'errorlog' 'callback' cbstderr 'TooltipString' tterrlog} ...      % Button error log
                { 'style' 'pushbutton' 'string' 'Download job results' 'tag' 'download' 'callback' cboutput 'TooltipString' ttresults}...  % Button download log
                { 'style' 'pushbutton' 'string' 'Load/plot results' 'tag' 'loadplot' 'callback' cbloadplot 'TooltipString' ttload}...      % Button plot
-               { 'style' 'text'       'string'  'Job color legend:'          'Tag' 'legend0'} ...                        % legend 0
-               { 'style' 'text'       'string'  [char(8226) ' Completed']    'Tag' 'legend1'} ...                        % legend 1    
-               { 'style' 'text'       'string'  [char(8226) ' Processing']   'Tag' 'legend2'} ...                        % legend 2
-               { 'style' 'text'       'string'  [char(8226) ' MATLAB Error'] 'Tag' 'legend3'} ...                        % legend 3
-               { 'style' 'text'       'string'  [char(8226) ' NSG Error']    'Tag' 'legend4'} ...                        % legend 4
+               { 'style' 'text'       'string'  'Job color legend:'          'Tag' 'legend0'} ...                                         % legend 0
+               { 'style' 'text'       'string'  [char(8226) ' Completed']    'Tag' 'legend1'} ...                                         % legend 1    
+               { 'style' 'text'       'string'  [char(8226) ' Processing']   'Tag' 'legend2'} ...                                         % legend 2
+               { 'style' 'text'       'string'  [char(8226) ' MATLAB Error'] 'Tag' 'legend3'} ...                                         % legend 3
+               { 'style' 'text'       'string'  [char(8226) ' NSG Error']    'Tag' 'legend4'} ...                                         % legend 4
                { 'style' 'text'       'string' 'NSG job status' 'fontweight' 'bold' }...                                                  % Label Status
                { 'style' 'text'       'string' ' ' 'tag' 'jobstatus'}...                                                                  % Text job Status
                { 'style' 'text'       'string' joblog 'tag' 'joblog' }...                                                                 % List Joblog
@@ -172,14 +177,14 @@ if nargin < 1
              {wt ht [c2+3.5 5.6]  [horzspan vertspam] }...    % Legend 4
              {wt ht [c1 6.4]      [horzspan vertspam] }...    % Label Status
              {wt ht [c2 6.4]      [horzspan vertspam] }...    % Text Job Status
-             {wt ht [c2 6.9]      [5 6.2]   }...              % List Joblog
+             {wt ht [c2 6.6]      [5 6.5]   }...              % List Joblog
              {wt ht [c1 11.7]     [horzspan vertspam] } ...   % Label submit
              {wt ht [c1 12.7]     [horzspan vertspam] } ...   % Label select file 
              {wt ht [c2 12.7]     [4.4 vertspam] } ...        % Edit Filepath
              {wt ht [c4 12.7]     [horzspan vertspam] }...    % Button load file
-             {wt ht [c1 14]     [horzspan vertspam] } ...   % Label File to execute
-             {wt ht [c2 14]     [3 vertspam] } ...          % Popup menu file to execute
-             {wt ht [c4 14]     [horzspan vertspam] }...    % Button test
+             {wt ht [c1 14]       [horzspan vertspam] } ...   % Label File to execute
+             {wt ht [c2 14]       [3 vertspam] } ...          % Popup menu file to execute
+             {wt ht [c4 14]       [horzspan vertspam] }...    % Button test
              {wt ht [c1 15.3]     [horzspan vertspam] } ...   % Label Job ID
              {wt ht [c2 15.3]     [3 vertspam] } ...          % Edit Job ID
              {wt ht [c1 17.2]     [horzspan vertspam] } ...   % Label Run options
@@ -194,7 +199,7 @@ if nargin < 1
     fig = figure('visible', 'off','Units', 'Normalized'); 
     supergui('fig', fig, 'geom', geom, 'uilist', uilist, 'userdata', '', 'title' , 'NSG-R Matlab/EEGLAB interface -- pop_nsg()');
     figpos = get(fig, 'Position');
-    set(fig, 'Units', 'Normalized', 'Position',[figpos(1) figpos(2) 0.3990 0.5389],'visible', 'on');
+    set(fig, 'Units', 'Normalized', 'Position',[figpos(1) figpos(2) 0.46 figpos(4)],'visible', 'on');
     % Color of text
     set(findobj('Tag', 'legend1'), 'ForegroundColor',  [0 1 0]);
     set(findobj('Tag', 'legend2'), 'ForegroundColor',  [0.1172    0.5625    1.0000]);
@@ -559,6 +564,7 @@ for i = 1:length(jobnames)
     jobstage{i}     = stage;
     jobsfailflag{i} = failflag;
     
+    % Job color status
     if strcmpi(stage, 'completed')
         jobnameout{i} = ['<html><font size=+0 color="#00cc00"> ' jobnames{i} '</html>'];
     elseif strcmp(failflag, 'true')
