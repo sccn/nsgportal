@@ -42,21 +42,24 @@ nsg_info;
 if ~exist('filetype', 'var'), filetype = 'xml'; end
 if ~exist('filename', 'var'), foldname = ''; end
 if nargin < 1
-    command = sprintf('curl -u %s:%s -H cipres-appkey:%s "%s/job/%s?expand=true" > tmptxt.xml', nsgusername,  nsgpassword, nsgkey, nsgurl, nsgusername); % request full job status objects
+      fprintf('Accessing jobs on NSG...')
+
+    command = sprintf('curl -s -u %s:%s -H cipres-appkey:%s "%s/job/%s?expand=true" > tmptxt.xml', nsgusername,  nsgpassword, nsgkey, nsgurl, nsgusername); % request full job status objects
     system(command);
     res2 = xml2struct('tmptxt.xml');
     res2 = removeTextTag(res2);    
 else
-    
+    fprintf('Accessing job: "%s" on NSG...',jobname)
+
     if strcmpi(filetype, 'xml')
-        command = sprintf(['curl -u %s:%s -H cipres-appkey:%s "%s?expand=true" > tmptxt.' filetype], nsgusername, nsgpassword, nsgkey, jobname);
+        command = sprintf(['curl -s -u %s:%s -H cipres-appkey:%s "%s?expand=true" > tmptxt.' filetype], nsgusername, nsgpassword, nsgkey, jobname);
         system(command);
         
         res2 = xml2struct('tmptxt.xml');
         res2 = removeTextTag(res2);
         
     elseif strcmpi(filetype, 'txt')
-        command = sprintf(['curl -u %s:%s -H cipres-appkey:%s "%s?expand=true" > tmptxt.' filetype], nsgusername, nsgpassword, nsgkey, jobname);
+        command = sprintf(['curl -s -u %s:%s -H cipres-appkey:%s "%s?expand=true" > tmptxt.' filetype], nsgusername, nsgpassword, nsgkey, jobname);
         system(command);
         res2 = [ 'tmptxt.' filetype ];
     else
@@ -70,7 +73,7 @@ else
         currentFolder = pwd;
         mkdir(tmpFolder)
         cd(tmpFolder);
-        command = sprintf(['curl -u %s:%s -H cipres-appkey:%s "%s?expand=true" > tmptxt.' filetype], nsgusername, nsgpassword, nsgkey, jobname);
+        command = sprintf(['curl -s -u %s:%s -H cipres-appkey:%s "%s?expand=true" > tmptxt.' filetype], nsgusername, nsgpassword, nsgkey, jobname);
         system(command);
         tmp = dir([ 'tmptxt.' filetype ]);
         if tmp.bytes == 0
@@ -82,3 +85,4 @@ else
         cd(currentFolder);
     end
 end    
+fprintf('Done.\n')
