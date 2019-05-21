@@ -74,7 +74,7 @@ catch
     disp('pop_nsg() error: calling convention {''key'', value, ... } error'); return;
 end
 
-try g.listvalue;        catch, g.listvalue       = 1 ;          end
+try g.listvalue;        catch, g.listvalue       = [] ;          end
 try g.jobid;            catch, g.jobid           = '';          end
 try g.outfile;          catch, g.outfile         = '';          end % Default defined in nsg_run
 try g.runtime;          catch, g.runtime         = 0.5;         end
@@ -87,15 +87,26 @@ if ~nsg_checknet
 end
 
 if nargin < 1
+    
+    % Closing open GUI and creating a new one
+    openfig = findobj('tag', 'pop_nsg');
+    if ~isempty(openfig)
+        disp('pop_nsg warning: there can be only one pop_nsg window, closing old one...')
+        close(openfig); 
+    end
+    fig = figure('visible', 'off','Units', 'Normalized', 'Tag', 'pop_nsg','visible','off' ); % create figure
+    
     % Callbacks
     res = nsg_jobs;
     if isfield(res, 'error')
         errordlg2(res.error.message);
         error(res.error.message);
     end
-    jobnames     = formatlistjob(res);
+    
+    jobstruct    = backupjobstatus(res);
+    jobnames     = {jobstruct.dispname};
     cbloadplot   = 'pop_nsg(gcbf,''loadplot'');';
-    cbcancel     = 'set(findobj(gcbf, ''tag'', ''runnsg''), ''userdata'', ''dummy'');'; % Setting a dummy change of userdata
+    cbcancel     = 'close(gcbf);';
     cblist       = 'pop_nsg(gcbf,''update'');';
     cbstdout     = 'pop_nsg(gcbf,''stdout'');';
     cbstderr     = 'pop_nsg(gcbf,''stderr'');';
@@ -196,43 +207,25 @@ if nargin < 1
     for i = 1:length(geom), geom{i}{3} = geom{i}{3}-1; end 
     
     % GUI setup
-    fig = figure('visible', 'off','Units', 'Normalized'); 
+    set(fig, 'Visible', 'on');
     supergui('fig', fig, 'geom', geom, 'uilist', uilist, 'userdata', '', 'title' , 'NSG-R Matlab/EEGLAB interface -- pop_nsg()');
     figpos = get(fig, 'Position');
     set(fig, 'Units', 'Normalized', 'Position',[figpos(1) figpos(2) 0.46 figpos(4)],'visible', 'on');
+    
     % Color of text
     set(findobj('Tag', 'legend1'), 'ForegroundColor',  [0 1 0]);
     set(findobj('Tag', 'legend2'), 'ForegroundColor',  [0.1172    0.5625    1.0000]);
     set(findobj('Tag', 'legend3'), 'ForegroundColor',  [0.6953    0.1328    0.1328]);
     set(findobj('Tag', 'legend4'), 'ForegroundColor',  [1.0000    0.2695         0]);
-  
-    
     pop_nsg(fig, 'update');
-    
-    % Wait for cancel, grab list position and close the GUI
-    waitfor( findobj('parent', fig, 'tag', 'runnsg'), 'userdata');
-    if ~(ishandle(fig)), return; end % Check if figure still exist
-    result = get(findobj(fig, 'tag', 'joblist'), 'value');
-    close(fig); 
-    
-     % GUI call command line output
-     tmpalljobs = nsg_jobs;
-     if ~isempty(tmpalljobs.joblist.jobs) && ~isempty(result)
-         alljobs = tmpalljobs.joblist.jobs.jobstatus;
-         if length(tmpalljobs.joblist.jobs.jobstatus)== 1
-             currentjob = tmpalljobs.joblist.jobs.jobstatus(1);
-         else
-             currentjob = tmpalljobs.joblist.jobs.jobstatus{result};
-         end
-     end
-     
+      
 else
     % GUI calls
     if ishandle(fig)
         newjob  = get(findobj(fig, 'tag', 'fileorfolder'), 'string');
         joblist = get(findobj(fig, 'tag', 'joblist'), 'string');
-        jobval  = get(findobj(fig, 'tag', 'joblist'), 'value');
         tmplist = get(findobj(fig, 'tag', 'listbox_mfile'), 'string');
+        if isempty(g.listvalue), g.listvalue = get(findobj(fig, 'tag', 'joblist'), 'value'); end
         
         % Def .m file to run
         if any(strcmp(str,{'rungui', 'test'}))
@@ -245,23 +238,13 @@ else
             end            
         end
         
+        jobstr = '';
         if ~isempty(joblist)
-            if ischar(joblist), joblist = {joblist(38:end-7)}; end % Here taking only jobid and exludcing HTML formating
-            for ijobs =1:length(joblist)
-                if ~isnsgurl(joblist{ijobs}(38:end-7))
-                    joblist{ijobs} = nsg_findclientjoburl(joblist{ijobs}(38:end-7));
-                else
-                    joblist{ijobs} = joblist{ijobs}(38:end-7);
-                end
-            end
-            jobstr = joblist{jobval};            
-        else
-            jobstr = '';
+            jobstruct = get(fig, 'userdata');
+            joblist =  {jobstruct.url};
+            if ~strcmp(str,'rescan'),jobstr = joblist{g.listvalue}; end          
         end
-        
-        % For com output
-        userdat = get(fig,'userdata'); 
-        
+                
     % Command line calls    
     else
         if isstruct(str) 
@@ -280,26 +263,37 @@ else
         case 'loadplot'
                nsg_info;
                resjob  = nsg_jobs([ jobstr '/output' ]);
+               flagerror = 0;
                if ~isempty(resjob.results.jobfiles)
-                   zipfilepos = find(cell2mat(cellfun(@(x) strcmp(x.parameterName,'outputfile'),resjob.results.jobfiles.jobfile,'UniformOutput',0)));
-                   [tmp, tmpval] = fileparts(resjob.results.jobfiles.jobfile{zipfilepos}.filename);
-                   [tmp, foldname] = fileparts(tmpval);
-                   tmpFolder = fullfile(outputfolder, foldname);
-                   if exist(tmpFolder,'dir')
-                       nsg_uilistfiles(tmpFolder,'oklabel', 'Load/plot' );
+                   zipfilepos = find(cell2mat(cellfun(@(x) strcmpi(x.parameterName,'outputfile'),resjob.results.jobfiles.jobfile,'UniformOutput',0)));
+                   if ~isempty(zipfilepos)
+                       [tmp, tmpval] = fileparts(resjob.results.jobfiles.jobfile{zipfilepos}.filename);
+                       [tmp, foldname] = fileparts(tmpval);
+                       tmpFolder = fullfile(outputfolder, foldname);
+                       if exist(tmpFolder,'dir')
+                           nsg_uilistfiles(tmpFolder,'oklabel', 'Load/plot' );
+                       else
+                           disp('pop_nsg: Unable to load/plot results. Results must be downloaded first');
+                           return;
+                       end
                    else
-                       disp('pop_nsg: Unable to load/plot results. Results must be downloaded first');
-                       return;
+                       flagerror = 1;
                    end
                else
-                   disp('pop_nsg: Unable to load/plot results. Computation has not finished');
+                   flagerror = 1;
+               end
+               
+               if flagerror
+                   disp([10 'pop_nsg: Unable to load/plot results. Either the computation has' 10 'not finished or something else went wrong while retreiving results']);
                    return;
-               end           
+               end
+               
+        case 'autorescan'
             
         case 'rescan'
             res = nsg_jobs;
-            jobnames = formatlistjob(res);
-            set(findobj(fig, 'tag', 'joblist'), 'value', g.listvalue, 'string', jobnames);
+            jobstruct = backupjobstatus(res);
+            set(findobj(fig, 'tag', 'joblist'), 'value', g.listvalue, 'string', {jobstruct.dispname});
             pop_nsg(fig, 'update');
             
         case 'deletegui'   
@@ -324,36 +318,24 @@ else
             set(findobj(fig, 'tag', 'joblog'), 'string', joblog);
             drawnow;
             
+            % Disabling buttons
+            set(findobj(fig, 'tag', 'outputlog'), 'enable', 'off');
+            set(findobj(fig, 'tag', 'errorlog'), 'enable', 'off');
+            set(findobj(fig, 'tag', 'download'), 'enable', 'off');
+            set(findobj(fig, 'tag', 'loadplot'), 'enable', 'off');
+            
             if ~isempty(jobstr)
-                resjob = nsg_jobs(jobstr);
-                if isfield(resjob,'jobstatus')
+                if ~isempty(jobstruct(g.listvalue))
                     % Enabling buttons
-                     [tmp, jobstage] = formatlistjob(resjob);
-                    
-                    set(findobj(fig, 'tag', 'jobstatus'), 'string', resjob.jobstatus.jobStage);
+                    jobstage = jobstruct(g.listvalue).jobstage;                   
+                    set(findobj(fig, 'tag', 'jobstatus'), 'string', jobstage);
                     if strcmpi(jobstage, 'completed')
                         set(findobj(fig, 'tag', 'outputlog'), 'enable', 'on');
                         set(findobj(fig, 'tag', 'errorlog'), 'enable', 'on');
                         set(findobj(fig, 'tag', 'download'), 'enable', 'on');
                         set(findobj(fig, 'tag', 'loadplot'), 'enable', 'on');
-                    else
-                        set(findobj(fig, 'tag', 'outputlog'), 'enable', 'off');
-                        set(findobj(fig, 'tag', 'errorlog'), 'enable', 'off');
-                        set(findobj(fig, 'tag', 'download'), 'enable', 'off');
-                        set(findobj(fig, 'tag', 'loadplot'), 'enable', 'off');
                     end
-                    if iscell(resjob.jobstatus.messages.message)
-                        jobtxt = cellfun(@(x)x.text, resjob.jobstatus.messages.message, 'uniformoutput', false);
-                    else
-                        jobtxt = { resjob.jobstatus.messages.message.text };
-                    end
-                    for iLine = 1:length(jobtxt)
-                        if length(jobtxt{iLine}) > 70
-                            jobtxt{iLine} = [ jobtxt{iLine}(1:67) '...' ];
-                        end
-                    end
-                    jobtxt = strvcat(jobtxt{:});
-                    set(findobj(fig, 'tag', 'joblog'), 'string', jobtxt);
+                    set(findobj(fig, 'tag', 'joblog'), 'string', jobstruct(g.listvalue).jobtxt);
                 end
             end
 
@@ -404,16 +386,17 @@ else
         case 'output'
             if isempty(valargin),disp('pop_nsg: No jobs were found.');return;end
             resjob  = nsg_jobs([ valargin '/output' ]);
+            restmp = 0;
             if ~isempty(resjob.results.jobfiles)
                 % Find zip file of results (name is not fixed anymore)
-                zipfilepos = find(cell2mat(cellfun(@(x) strcmp(x.parameterName,'outputfile'),resjob.results.jobfiles.jobfile,'UniformOutput',0)));
-                % Getting name of results file
-                [tmp, tmpval] = fileparts(resjob.results.jobfiles.jobfile{zipfilepos}.filename);
-                [tmp, foldname] = fileparts(tmpval);
-                % Pulling results
-                restmp  = nsg_jobs(resjob.results.jobfiles.jobfile{zipfilepos}.downloadUri.url, 'zip',foldname);
-            else
-                restmp = 0;
+                zipfilepos = find(cell2mat(cellfun(@(x) strcmpi(x.parameterName,'outputfile'),resjob.results.jobfiles.jobfile,'UniformOutput',0)));
+                if ~isempty(zipfilepos)
+                    % Getting name of results file
+                    [tmp, tmpval] = fileparts(resjob.results.jobfiles.jobfile{zipfilepos}.filename);
+                    [tmp, foldname] = fileparts(tmpval);
+                    % Pulling results
+                    restmp  = nsg_jobs(resjob.results.jobfiles.jobfile{zipfilepos}.downloadUri.url, 'zip',foldname);
+                end
             end
             if restmp == 0
                 warndlg2('File is empty, check error');
@@ -462,9 +445,10 @@ else
                 end
                 
                 pop_nsg('run', newjob, tmpparams{:});
-                if iscell(get(findobj(gcf,'tag','joblist'),'string'))
-                    listpos = length(get(findobj(gcf,'tag','joblist'),'string'))+1;
-                elseif ~isempty(get(findobj(gcf,'tag','joblist'),'string'))
+                tmpjoblist = get(findobj(gcf,'tag','joblist'),'string');
+                if length(tmpjoblist)>1 
+                    listpos = length(tmpjoblist)+1;
+                elseif length(tmpjoblist)==1 && ~isempty(tmpjoblist{1})
                     listpos = 2;
                 else
                     listpos = 1;
@@ -495,7 +479,7 @@ else
     if ~ishandle(fig)
         tmpalljobs    = nsg_jobs;
         if ~isempty(tmpalljobs.joblist.jobs)
-            alljobs = tmpalljobs.joblist.jobs.jobstatus; %tmpalljobs.jobstatus;
+            alljobs = tmpalljobs.joblist.jobs.jobstatus;
         end
     end
 end
@@ -516,61 +500,107 @@ end
 
 % ---   
 function urlflag = isnsgurl(urlcheck)
-if length(urlcheck)>= 20
+if length(urlcheck)>= 21
     urlflag =fastif(strcmp('https://nsgr.sdsc.edu',urlcheck(1:21)),1,0);  
 else
     urlflag = 0;
 end
 end
 
-%---
-function [jobnameout, jobstage, jobsfailflag] = formatlistjob(res)
-jobnameout = [];
+% --- 
+function jobstruct = backupjobstatus(res)
+guihandle = findobj('Tag', 'pop_nsg');
+jobstruct = struct('url', '','jopbid', '','jobtxt','','jobstage','','nsgerrorflag','','matlaberrorflag','','dispname','');
 
 % Get URL
 if isfield(res,'joblist')
-    jobStatus = res.joblist.jobs.jobstatus;
-    res = res.joblist.jobs;
+    if ~isempty(res.joblist.jobs)
+        jobStatus = res.joblist.jobs.jobstatus;
+    else
+        jobStatus = [];
+    end
 else %isfield(res,'jobstatus')
     jobStatus = res.jobstatus;
 end
-if ~iscell(jobStatus), jobStatus = { jobStatus }; end
-for iJob = 1:length(jobStatus)
-    clientjoburl{iJob} = jobStatus{iJob}.selfUri.url;
+
+if ~isempty(jobStatus)
+    if ~iscell(jobStatus), jobStatus = { jobStatus }; end
+    for iJob = 1:length(jobStatus)
+        jobstruct(iJob).url = jobStatus{iJob}.selfUri.url;
+    end
+    
+    % Get job id
+    jobnames = nsg_getjobid({jobstruct.url},1,res);
+    
+    % ---- AFTER HERE WE SHOULD WORK ONLY WITH 'jobstatus' instead of 'res'
+    for i = 1:length(jobnames)
+        jobstruct(i).jobid = jobnames{i};
+        
+        %     if length(jobnames)==1
+        %         if iscell(jobStatus.messages.message)
+        %             stage = jobStatus.messages.message{end}.stage;
+        %             jobtxt = cellfun(@(x)x.text, jobStatus.messages.message, 'uniformoutput', false);
+        %         else
+        %             stage = jobStatus.messages.message.stage;
+        %              jobtxt = { jobStatus.messages.message.text };
+        %         end
+        %         failflag = jobStatus.failed;
+        %     else
+        if iscell(jobStatus{i}.messages.message)
+            stage = jobStatus{i}.messages.message{end}.stage;
+            jobtxt = cellfun(@(x)x.text, jobStatus{i}.messages.message, 'uniformoutput', false);
+        else
+            stage = jobStatus{i}.messages.message.stage;
+            jobtxt = { jobStatus{i}.messages.message.text };
+        end
+        failflag = jobStatus{i}.failed;
+        
+        for iLine = 1:length(jobtxt)
+            if length(jobtxt{iLine}) > 70
+                jobtxt{iLine} = [ jobtxt{iLine}(1:67) '...' ];
+            end
+        end
+        
+        jobstruct(i).jobtxt = strvcat(jobtxt{:});
+        jobstruct(i).jobstage = stage;
+        jobstruct(i).nsgerrorflag = failflag;
+        
+        % Reading MATLAB log if COMPLETED
+        jobstruct(i).matlaberrorflag = [];
+        if strcmpi(stage, 'completed')
+            resjob  = nsg_jobs([jobstruct(i).url '/output']);
+            if ~isempty(resjob.results.jobfiles)
+                url = geturl(resjob.results.jobfiles.jobfile, 'STDOUT');
+            else
+                url = '';
+            end
+            if ~isempty(url)
+                resfile = nsg_jobs(url, 'txt');
+            else
+                resfile = pwd; % any folder
+            end
+            tmp = dir(resfile);
+            fid = fopen(fullfile(tmp.folder,'tmptxt.txt'));
+            matlog = textscan(fid,'%q');
+            jobstruct(i).matlaberrorflag = ~isempty(find(cell2mat(cellfun(@(x)strcmp(x,'Error'), matlog{1}, 'UniformOutput', 0))));
+        end
+        
+        % Job  status
+        if strcmpi(stage, 'completed') %
+            if jobstruct(i).matlaberrorflag
+                jobnameout = ['<html><font size=+0 color="#e600000"> ' jobnames{i} '</html>']; % MATLAB error
+            else
+                jobnameout = ['<html><font size=+0 color="#00cc00"> ' jobnames{i} '</html>']; % Completed
+            end
+        elseif strcmp(failflag, 'true')
+            jobnameout = ['<html><font size=+0 color="#4d94ff"> ' jobnames{i} '</html>']; % NSG error
+        else
+            jobnameout =['<html><font size=+0 color="#4d94ff"> ' jobnames{i} '</html>']; % Proccesing
+        end
+        jobstruct(i).dispname = jobnameout;
+    end
 end
 
-% Get job id
-jobnames = nsg_getjobid(clientjoburl,1);
-
-% Get Status
-if ischar(jobnames), jobnames = {jobnames}; end
-for i = 1:length(jobnames)
-    
-    if length(jobnames)==1
-        if iscell(res.jobstatus.messages.message)
-            stage = res.jobstatus.messages.message{end}.stage;
-        else
-            stage = res.jobstatus.messages.message.stage;
-        end
-        failflag = res.jobstatus.failed;
-    else
-        if iscell(res.jobstatus{i}.messages.message)
-            stage = res.jobstatus{i}.messages.message{end}.stage;
-        else
-            stage =res.jobstatus{i}.messages.message.stage;
-        end
-        failflag = res.jobstatus{i}.failed;
-    end
-    jobstage{i}     = stage;
-    jobsfailflag{i} = failflag;
-    
-    % Job color status
-    if strcmpi(stage, 'completed')
-        jobnameout{i} = ['<html><font size=+0 color="#00cc00"> ' jobnames{i} '</html>'];
-    elseif strcmp(failflag, 'true')
-        jobnameout{i} = ['<html><font size=+0 color="#4d94ff"> ' jobnames{i} '</html>'];
-    else
-        jobnameout{i} =['<html><font size=+0 color="#4d94ff"> ' jobnames{i} '</html>'];
-    end
-end
+% Store in figure
+set(guihandle,'userdata', jobstruct); 
 end
