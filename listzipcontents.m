@@ -42,7 +42,9 @@ if exist('extension', 'var') && ~isempty(extension)
 [trash, filenamenames, exts] =cellfun(@(x) fileparts(x),filelistmp,'UniformOutput',0); % ~ may not work in old MATLAB versions
      filespos = find(cell2mat(cellfun(@(x) strcmp(x, extension),exts,'UniformOutput',0)));
      if ~isempty(filespos)
-         filelist =cellfun(@(x) cat(2,x,extension), filenamenames(filespos),'UniformOutput',0);
+         dotfilespos = find(cell2mat(cellfun(@(x) strcmp(x(1), '.'),filenamenames(filespos),'UniformOutput',0)));
+         filespos(dotfilespos) = [];
+         filelist = cellfun(@(x) cat(2,x,extension), filenamenames(filespos),'UniformOutput',0);
      end
 else
     filelist = filelistmp;
