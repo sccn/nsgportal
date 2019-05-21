@@ -50,6 +50,12 @@ try  g.oklabel;       catch, g.oklabel       = 'OK';               end
 try  g.okcallback;    catch, g.okcallback    = @defaultokcallback; end
 
 %%
+% Closing open GUI and creating a new one
+    openfig = findobj('tag', 'filebrowserapp');
+    if ~isempty(openfig)
+        disp('nsg_uilistfiles warning: there can be only one window open, closing the old one...')
+        close(openfig); 
+    end
 fig = figure('visible', 'off','name', g.name, 'units', 'normalized', 'tag', 'filebrowserapp');
 
 allstr = '';
@@ -72,11 +78,11 @@ else
     maxval = 2;
 end
 usrdat = pathname;
-listui = {{ 'Style', 'listbox', 'tag', 'listboxvals', 'string', allstr, 'max', maxval, 'min', minval } ...
-          { 'Style', 'text', 'tag', 'textpath','string', shortenpath(pathname)}  ...
+listui = {{ 'Style', 'listbox', 'tag', 'filebrowserapp_listboxvals', 'string', allstr, 'max', maxval, 'min', minval } ...
+          { 'Style', 'text', 'tag', 'filebrowserapp_textpath','string', shortenpath(pathname)}  ...
           {}...
 		  { 'Style', 'pushbutton', 'string', 'Cancel', 'callback', ['set(gcbf, ''userdata'', ''cancel''); close(gcbf);'] }  ...
-		  { 'Style', 'pushbutton', 'tag', 'buttonok', 'string', g.oklabel    , 'callback', ['set(gcbf, ''userdata'', ''ok'');'] } };
+		  { 'Style', 'pushbutton', 'tag', 'filebrowserapp_buttonok', 'string', g.oklabel    , 'callback', ['set(gcbf, ''userdata'', ''ok'');'] } };
 
 if ~isempty(g.promptstring)
 	geometry = {[1] geometry{:}};
@@ -88,9 +94,9 @@ end
 set(findobj('tag','filebrowserapp'),'Position',[0.2516 0.5194 0.1443 0.3222]);
 
 %% Asigning callback to list
-listobj  = findobj('tag', 'listboxvals');
+listobj  = findobj('tag', 'filebrowserapp_listboxvals');
 set(listobj,'callback', @clickcallback);
-okobj  = findobj('tag', 'buttonok');
+okobj  = findobj('tag', 'filebrowserapp_buttonok');
 set(okobj,'callback', g.okcallback);
 end
 
@@ -123,7 +129,7 @@ else
                 liststring = {listmp.name};
                 set(obj,'string',liststring, 'value', 1);  
                 set(get(obj,'Parent'), 'userdata',fileparts(filepath));
-                set(findobj('tag','textpath'),'string',shortenpath(fileparts(filepath)));
+                set(findobj('tag','filebrowserapp_textpath'),'string',shortenpath(fileparts(filepath)));
           otherwise
               if isdir(fullfile(filepath,filename))
                 listmp = dir(fullfile(filepath,filename));
@@ -132,7 +138,7 @@ else
                     set(obj,'string',liststring, 'value', 1);
                 end
                 set(get(obj,'Parent'), 'userdata',fullfile(filepath,filename));
-                set(findobj('tag','textpath'),'string',fullfile(filepath,filename));
+                set(findobj('tag','filebrowserapp_textpath'),'string',fullfile(filepath,filename));
               end
       end
 end
@@ -140,8 +146,8 @@ end
 
 %--- 
 function defaultokcallback(obj,evt)
-val = get(findobj('tag', 'listboxvals'),'value');
-listmp = get(findobj('tag', 'listboxvals'),'string');
+val = get(findobj('tag', 'filebrowserapp_listboxvals'),'value');
+listmp = get(findobj('tag', 'filebrowserapp_listboxvals'),'string');
 
 if ischar(listmp)
     filename = deblank(listmp(val,:));
@@ -162,7 +168,7 @@ switch ext(2:end)
         img = imread(filefull);
         figure; imshow(img);
     case 'set'
-        evalin('base', sprintf(['EEG = pop_loadset(''filename'', ''%s'',''filepath'',''%s'');[ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, length(ALLEEG)+1); CURRENTSET = length(ALLEEG);'],filename,filepath ));
+        evalin('base', sprintf(['eeglab redraw; EEG = pop_loadset(''filename'', ''%s'',''filepath'',''%s'');[ALLEEG, EEG, CURRENTSET] = eeg_store( ALLEEG, EEG, length(ALLEEG)+1); CURRENTSET = length(ALLEEG); eeglab redraw;'],filename,filepath ));
     case 'mat'
         evalin('base','load(filefull)');
     otherwise
