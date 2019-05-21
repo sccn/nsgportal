@@ -34,17 +34,30 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-function clientjobid = nsg_getjobid(clientjoburl,ignoreidnum)
+function clientjobid = nsg_getjobid(clientjoburl,ignoreidnum, res)
 
 if iscell(clientjoburl), ninputs = length(clientjoburl); else, ninputs =1; end
 clientjobid = cell(1,ninputs);
 for i =1:ninputs
     if iscell(clientjoburl), clientjobtmp = clientjoburl{i}; else, clientjobtmp = clientjoburl; end
-    jobstr = nsg_jobs(clientjobtmp);
     
-    tmphit = find(cellfun(@(x) strcmp(x.key,'clientJobId'),jobstr.jobstatus.metadata.entry));
+    if nargin<3
+        tmp = nsg_jobs(clientjobtmp);
+        jobstr = tmp.jobstatus;
+    else
+        if ~isfield(res,'joblist') && strcmp(clientjobtmp,res.jobstatus.selfUri.url)
+            jobstr = res.jobstatus;
+        elseif ~iscell(res.joblist.jobs.jobstatus) && strcmp(clientjobtmp,res.joblist.jobs.jobstatus.selfUri.url)
+            jobstr = res.joblist.jobs.jobstatus;
+        else
+            indx = find(cellfun(@(x) strcmp(x.selfUri.url,clientjobtmp),res.joblist.jobs.jobstatus));
+            jobstr = res.joblist.jobs.jobstatus{indx};
+        end    
+    end
+    
+    tmphit = find(cellfun(@(x) strcmp(x.key,'clientJobId'),jobstr.metadata.entry));
     if ~isempty(tmphit)
-        jobidtmp = jobstr.jobstatus.metadata.entry{tmphit}.value;
+        jobidtmp = jobstr.metadata.entry{tmphit}.value;
     end
     
     % Note: The rationale here is by assuming that numeric IDs are not assigned
@@ -60,4 +73,4 @@ for i =1:ninputs
     end
 end
 
-if ninputs==1, clientjobid=clientjobid{1}; end
+% if ninputs==1, clientjobid=clientjobid{1}; end
