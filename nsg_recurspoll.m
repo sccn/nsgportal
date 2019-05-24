@@ -1,5 +1,5 @@
 % nsg_recurspoll     - Given a jobid the function keep polling recursively
-%                      for the job status until job is completed.
+%                      the job status until job is completed.
 %                                            
 % Usage: 
 %             >> jobstruct = nsg_recurspoll(jobid)
@@ -51,25 +51,25 @@ catch
     disp('nsg_recurspoll() error: calling convention {''key'', value, ... } error'); return;
 end
 
-try g.pollinterval;     catch, g.pollinterval= 450 ;       end
-try g.verbose;          catch, g.verbose = 1 ;              end
+try g.pollinterval;     catch, g.pollinterval= 60;       end
+try g.verbose;          catch, g.verbose = 1 ;           end
 
-if g.pollinterval<1800
-    disp(['nsg_recurspoll: Invalid polling interval. This parameter should be higher that 450 (sec).' char(10)...
-          '                Please, keep polling frequency as low as possible to avoid overloading NSG']);
+if g.pollinterval<60
+    warning(['Attention to the polling interval value used. This may impact negatively ' char(10)...
+          '         the server performance. Try keeping this parameter as low as possible']);
 end
 
 joburl = nsg_findclientjoburl(jobid);
 if ~isempty(joburl)
     t = timer;
-    t.TimerFcn = @(~,~)nsgpoll(joburl,g.verbose);
     t.Period =  g.pollinterval;
     t.ExecutionMode = 'fixedRate';
     t.TasksToExecute = 1000;
     t.BusyMode = 'queue';
+    t.TimerFcn = @(~,~)nsgpoll(joburl,g.verbose);
     start(t);
-    waitfor(t);
-    
+    wait(t);
+    delete(t);
     jobstruct = nsg_jobs(joburl);
 end
 
@@ -82,9 +82,12 @@ else
     stage = res.jobstatus.messages.message.stage;
 end
  if verbose
-     disp(['Job status: ' stage]);
+     format shortg;
+     timeval = clock;
+     disp(['Job status on ' num2str(timeval(2)) '-' num2str(timeval(3)) '-' num2str(timeval(1)) ' ' num2str(timeval(4)) ':'  num2str(timeval(5))   ' : ' stage]);
  end
 
 if strcmpi(stage, 'completed')
-    delete(t);
+    alltimersobj = timerfindall;
+    stop(alltimersobj);
 end
