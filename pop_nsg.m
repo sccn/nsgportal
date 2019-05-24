@@ -329,8 +329,8 @@ else
                     % Enabling buttons
                     jobstage = jobstruct(g.listvalue).jobstage;                   
                     set(findobj(fig, 'tag', 'jobstatus'), 'string', jobstage);
+                    set(findobj(fig, 'tag', 'outputlog'), 'enable', 'on');        
                     if strcmpi(jobstage, 'completed')
-                        set(findobj(fig, 'tag', 'outputlog'), 'enable', 'on');
                         set(findobj(fig, 'tag', 'errorlog'), 'enable', 'on');
                         set(findobj(fig, 'tag', 'download'), 'enable', 'on');
                         set(findobj(fig, 'tag', 'loadplot'), 'enable', 'on');
@@ -341,11 +341,20 @@ else
 
         case 'stdout'
             if isempty(jobstr),disp('pop_nsg: No jobs were found.');return;end
-            resjob  = nsg_jobs([ jobstr '/output' ]);
-            if ~isempty(resjob.results.jobfiles)
-                url = geturl(resjob.results.jobfiles.jobfile, 'STDOUT');
+            url = '';
+            if strcmpi( jobstruct(g.listvalue).jobstage,'completed')
+                resjob  = nsg_jobs([ jobstr '/output' ]);
+                if ~isempty(resjob.results.jobfiles)
+                    url = geturl(resjob.results.jobfiles.jobfile, 'STDOUT');
+                end
             else
-                url = '';
+                allfiles  = nsg_jobs([ jobstr '/workingdir' ]);
+                if ~isempty(allfiles.workingdir.jobfiles.jobfile)
+                    hittmp  = find(cellfun(@(x) strcmpi(x.filename,'stdout.txt'),allfiles.workingdir.jobfiles.jobfile));
+                    if ~isempty(hittmp)
+                        url = [ jobstr '/workingdir/stdout.txt'];
+                    end
+                end
             end
             if ~isempty(url)
                 resfile = nsg_jobs(url, 'txt');
@@ -354,7 +363,7 @@ else
             end
             tmp = dir(resfile);
             if tmp(1).bytes == 0 || isempty(url)
-                warndlg2('File is empty, check error');
+                warndlg2(['File is empty, check for errors' char(10) 'If you were checking for intermediate output log, try again later.']);
             else
                 pophelp(resfile, 1);
             end
