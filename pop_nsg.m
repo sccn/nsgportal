@@ -117,7 +117,7 @@ if nargin < 1
     cbrun        = 'pop_nsg(gcbf,''rungui'',eval( [ ''{'' get(findobj(gcf,''tag'',''edit_runopt''),''string'') ''}'' ] ));';
     cbsetmfile   = 'jobfile = get(findobj(gcbf,''tag'',''fileorfolder''),''String''); mfilelist = '' '';if ~isempty(jobfile),if isdir(jobfile),mfilestmp = dir(fullfile(jobfile, ''*.m''));if ~isempty(mfilestmp), mfilelist = {mfilestmp.name}; end;else,mfilelist = listzipcontents(jobfile, ''.m'');if isempty(mfilelist), mfilelist = '' ''; end; end;set(findobj(gcbf,''tag'',''listbox_mfile''),''string'',mfilelist,''Value'', 1);end;clear pathname filename;';
     cbsetjobid   = 'if ~isequal(pathname, 0), [tmp, filenamenoext]= fileparts(filename); set(findobj(gcf,''tag'',''edit_jobid''),''string'',[filenamenoext num2str(ceil(1000*rand(1)))]);clear filenamenoext;end;';
-    cbload       =  ['ButtonName = questdlg2(''Do you want to load a ZIP file or a folder?'',''pop_nsg'',''Folder'', ''ZIP File'', ''ZIP File'');if strcmpi(ButtonName, ''zip file''),[filename pathname] = uigetfile({''*.zip'' ''*.ZIP''});if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', fullfile(pathname, filename));end;else,pathname = uigetdir();if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', pathname);end;end;' cbsetjobid cbsetmfile];
+    cbload       =  ['ButtonName = questdlg2(''Do you want to load a ZIP file or a folder?'',''pop_nsg'',''Folder'', ''ZIP File'', ''ZIP File'');if strcmpi(ButtonName, ''zip file''),[filename pathname] = uigetfile({''*.zip'' ''*.ZIP''});if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', fullfile(pathname, filename));end;else,pathname = uigetdir();[trash,filename] = fileparts(pathname);if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', pathname);end;end;' cbsetjobid cbsetmfile];
     cbmfileset   =  'jobfile = get(findobj(gcbf,''tag'',''fileorfolder''),''String'');if ~isempty(jobfile), [tmp, filenamenoext]=fileparts(jobfile); set(findobj(gcf,''tag'',''edit_jobid''),''string'',[filenamenoext num2str(ceil(1000*rand(1)))]);clear filenamenoext;end;';
     joblog       = char(ones(7,70)*' ');
     
@@ -185,7 +185,7 @@ if nargin < 1
              {wt ht [c2+1 5.6]    [horzspan vertspam] }...    % Legend 1
              {wt ht [c2+1.75 5.6] [horzspan vertspam] }...    % Legend 2
              {wt ht [c2+2.55 5.6] [horzspan vertspam] }...    % Legend 3
-             {wt ht [c2+3.5 5.6]  [horzspan vertspam] }...    % Legend 4
+             {wt ht [c2+3.5 5.6]  [horzspan-1 vertspam] }...  % Legend 4
              {wt ht [c1 6.4]      [horzspan vertspam] }...    % Label Status
              {wt ht [c2 6.4]      [horzspan vertspam] }...    % Text Job Status
              {wt ht [c2 6.6]      [5 6.5]   }...              % List Joblog
@@ -213,7 +213,7 @@ if nargin < 1
     set(fig, 'Units', 'Normalized', 'Position',[figpos(1) figpos(2) 0.46 figpos(4)],'visible', 'on');
     
     % Color of text
-    set(findobj('Tag', 'legend1'), 'ForegroundColor',  [0 1 0]);
+    set(findobj('Tag', 'legend1'), 'ForegroundColor',  [0.1328    0.5430    0.1328]);
     set(findobj('Tag', 'legend2'), 'ForegroundColor',  [0.1172    0.5625    1.0000]);
     set(findobj('Tag', 'legend3'), 'ForegroundColor',  [0.6953    0.1328    0.1328]);
     set(findobj('Tag', 'legend4'), 'ForegroundColor',  [1.0000    0.2695         0]);
