@@ -66,7 +66,8 @@ if ~isempty(joburl)
     t.ExecutionMode = 'fixedRate';
     t.TasksToExecute = 1000;
     t.BusyMode = 'queue';
-    t.TimerFcn = @(~,~)nsgpoll(joburl,g.verbose);
+    t.Tag = ['timer_nsg_recursepoll_' num2str(floor(100*rand(1)))]; % Neccesary in case more than one timer is running in paralell
+    t.TimerFcn = @(~,~)nsgpoll(joburl,g.verbose,t.Tag);
     start(t);
     wait(t);
     delete(t);
@@ -74,7 +75,7 @@ if ~isempty(joburl)
 end
 
 %---
-function nsgpoll(joburl,verbose)
+function nsgpoll(joburl,verbose,tagval)
 res = nsg_jobs(joburl);
 if iscell(res.jobstatus.messages.message)
     stage =res.jobstatus.messages.message{end}.stage;
@@ -88,6 +89,6 @@ end
  end
 
 if strcmpi(stage, 'completed')
-    alltimersobj = timerfindall;
+    alltimersobj = timerfindall('Tag', tagval);
     stop(alltimersobj);
 end
