@@ -91,7 +91,7 @@ if isempty(g.subdirname)
                                                 zipFile, num2str(g.jobid), g.outfile, g.runtime, g.filename);                                                                                    
 else
    command = sprintf([curlcom ' -F vparam.subdirname_=%s > tmptxt.xml'], nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername,...
-                                                                      zipFile, num2str(g.jobid), g.outfile, num2str(g.runtime), g.filename, g.subdirname);
+                                                                      zipFile, num2str(g.jobid), g.outfile, g.runtime, g.filename, g.subdirname);
 end
 system(command);
 disp('Job has been submitted!');
