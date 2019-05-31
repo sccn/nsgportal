@@ -71,7 +71,8 @@ if ~isempty(joburl)
     start(t);
     wait(t);
     delete(t);
-    jobstruct = nsg_jobs(joburl);
+    jobstructmp = nsg_jobs(joburl);
+    jobstruct = jobstructmp.jobstatus;
 end
 
 %---
