@@ -12,6 +12,10 @@
 %   'delete'    - Delete job  associated to job identifier or job structure 
 %                 provided as argument
 %   'run'       - Submit .zip or folder provided as argument to run on NSG.
+%                 If this option is used the option 'filename' is mandatory
+%   'filename'  - String with the name of main file to run in NSG. Use only 
+%                 (mandatory) if command line option option 'run' is used.
+%                 Otherwise not used with any other option
 % 
 % Optional inputs:
 %   'jobid'           - String with the client job id. This was assigned to the
@@ -24,8 +28,6 @@
 %   'runtime'         - Time (in hours) to allocate for running the job in NSG. 
 %                       Maximun time allocation is 48 hrs. Use with command line 
 %                       option option 'run'. Default: 0.5
-%   'filename'        - Name of main file to run in NSG. Default: 'test.m'
-%                       Use with command line option option 'run'.
 %   'subdirname'      - Name of Sub-directory containing the main file i.e. if
 %                       your main file is not on the top level directory. Use
 %                       with command line option option 'run'. Default: None
@@ -78,7 +80,7 @@ try g.listvalue;        catch, g.listvalue       = [] ;          end
 try g.jobid;            catch, g.jobid           = '';          end
 try g.outfile;          catch, g.outfile         = '';          end % Default defined in nsg_run
 try g.runtime;          catch, g.runtime         = 0.5;         end
-try g.filename;         catch, g.filename        = {''};        end
+try g.filename;         catch, g.filename        = '';          end
 try g.subdirname;       catch, g.subdirname      = '';          end
 
 % Internet checking
@@ -164,7 +166,7 @@ if nargin < 1
                { 'style' 'edit'       'string' '' 'tag' 'fileorfolder' 'TooltipString' ttfile} ...                                           % Edit Filepath
                { 'style' 'pushbutton' 'string' 'Browse...'    'callback' cbload 'TooltipString' ttbrowse}...                                 % Button load file
                { 'style' 'text'       'string' 'Matlab script to execute' 'TooltipString' ttmatfile}...                                      % Label File to execute
-               {'style'  'popupmenu'  'string' g.filename 'tag' 'listbox_mfile' 'callback' cbmfileset 'TooltipString' ttmatfile}...          % Popup menu file to execute
+               {'style'  'popupmenu'  'string' {g.filename} 'tag' 'listbox_mfile' 'callback' cbmfileset 'TooltipString' ttmatfile}...          % Popup menu file to execute
                {'style'  'pushbutton' 'string' 'Test job locally' 'callback' cbtest 'TooltipString' tttest}...                               % Button test
                {'style'  'text'       'string' 'Job ID (default or custom)' 'TooltipString' ttjobid}...                                      % Label Job ID
                {'style'  'edit'       'string' ' ' 'tag' 'edit_jobid' 'TooltipString' ttopts}...                                             % Edit  Job ID
@@ -251,16 +253,21 @@ else
                 
     % Command line calls    
     else
-        if isstruct(str) 
-            if isfield(str,'selfUri')
-                valargin = str.selfUri.url;
+        if ~isempty(str)
+            if isstruct(str)
+                if isfield(str,'selfUri')
+                    valargin = str.selfUri.url;
+                else
+                    error('pop_nsg: Invalid job structure provided as input');
+                end
             else
-                error('pop_nsg: Invalid job structure provided as input');
+                valargin = str;
             end
+            str = fig; % Here fig is the input.
         else
-            valargin = str;
+            disp('pop_nsg: Second argument invalid or have not been found.'); 
+            return;
         end
-        str = fig; % Here fig is the input.   
     end
     
     switch str
@@ -319,14 +326,12 @@ else
             pop_nsg(fig, 'rescan','listvalue',1);
             
         case 'delete'
-            if ~isempty(valargin)
                 % Command line output
                 tmpcurrentjob = nsg_jobs(valargin);
                 currentjob = tmpcurrentjob.jobstatus;
                 currentjob.jobStage = 'DELETED';
                 % Deleting job
                 nsg_delete(valargin);         
-            end
     
         case 'update'
             joblog   = char(ones(7,70)*' ');
@@ -414,7 +419,6 @@ else
             pop_nsg('output', jobstr);
 
         case 'output'
-            if isempty(valargin),disp('pop_nsg: No jobs were found.');return;end
             resjob  = nsg_jobs([ valargin '/output' ]);
             restmp = 0;
             if ~isempty(resjob.results.jobfiles)
@@ -445,12 +449,8 @@ else
             end
             
         case 'test'
-            if isempty(valargin)
-                warndlg2('Empty input');
-            else
-                nsg_test(valargin);
-            end
-            
+            nsg_test(valargin);
+
         case 'rungui' 
              if isempty(newjob)
                 warndlg2('Empty input');
@@ -487,21 +487,20 @@ else
              end    
              
         case 'run'
-            if isempty(valargin)
-                warndlg2('Empty input');
-            else  
-                if isempty(g.jobid)
-                    g.jobid = [filenamenoext num2str(ceil(1000*rand(1)))];
-                end
-                if isempty(g.outfile)
-                    g.outfile = ['nsgresults_' g.jobid];
-                end
-                currentjoburl = nsg_run(valargin,'jobid', g.jobid,'outfile',g.outfile,'runtime',g.runtime,'filename', g.filename, 'subdirname', g.subdirname);                
-                % Command line output
-                if ~isempty(currentjoburl)
-                    tmpcurrentjob = nsg_jobs(currentjoburl);
-                    currentjob = tmpcurrentjob.jobstatus;
-                end
+            if isempty(g.filename), disp('pop_nsg: Option ''filename'' MUST be provided'); return; end
+            
+            if isempty(g.jobid)
+                [trash,filenamenoext] = fileparts(valargin);
+                g.jobid = [filenamenoext num2str(ceil(1000*rand(1)))];
+            end
+            if isempty(g.outfile)
+                g.outfile = ['nsgresults_' g.jobid];
+            end
+            currentjoburl = nsg_run(valargin,'jobid', g.jobid,'outfile',g.outfile,'runtime',g.runtime,'filename', g.filename, 'subdirname', g.subdirname);
+            % Command line output
+            if ~isempty(currentjoburl)
+                tmpcurrentjob = nsg_jobs(currentjoburl);
+                currentjob = tmpcurrentjob.jobstatus;
             end
     end 
     
