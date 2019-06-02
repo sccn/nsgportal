@@ -8,7 +8,7 @@
 % Here we will submit a job located in the path below to NSG. This is
 % included in the plugin folder.
 
-path2zip = '/demo_jobs/TestingEEGLABNSG.zip';
+path2zip = '/Users/amon-ra/program_files/eeglab/plugins/nsgportal/demos/demo_jobs/TestingEEGLABNSG.zip';
 
 % Runnning a job with default options by passing the path to the job and
 % defining the script to execute inside the job's zip file
@@ -20,17 +20,17 @@ path2zip = '/demo_jobs/TestingEEGLABNSG.zip';
 
 %% Checking job status periodically
 % Check the status of the job periodically by calling the function nsg_recurspol, providing 
-% as argument the NSG job structure, a job ID (see example below) or a job URL
+% as argument the NSG job structure(see example below), a job ID or a job URL
 
- jobstruct = nsg_recurspoll('runica_testing','pollinterval', 10);  % TODO: add url and struct as input
+ jobstruct = nsg_recurspoll(currentjob,'pollinterval', 10);
 
 %% Retrieving job results
 % Retreive and download job results by providing an NSG job structure (see example below),
 % a job ID or a job URL to pop_nsg
-[currentjobout, alljobs] = pop_nsg('output',jobstruct);  % TODO: jobid option as input
+[currentjobout, alljobs] = pop_nsg('output',jobstruct); 
 
 %% Deleting an NSG job
 % Delete a job from the NSG record associated with the user NSG credential by
 % providing an NSG job structure (see example below), a job ID or a job URL to pop_nsg
 
-[jobdeleted, alljobs] = pop_nsg('delete',jobstruct);   % TODO: add jobid option as input
+[jobdeleted, alljobs] = pop_nsg('delete','runica_testing');
