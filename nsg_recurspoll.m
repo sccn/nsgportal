@@ -59,21 +59,38 @@ if g.pollinterval<60
           '         the server performance. Try keeping this parameter as low as possible']);
 end
 
-joburl = nsg_findclientjoburl(jobid);
-if ~isempty(joburl)
-    t = timer;
-    t.Period =  g.pollinterval;
-    t.ExecutionMode = 'fixedRate';
-    t.TasksToExecute = 1000;
-    t.BusyMode = 'queue';
-    t.Tag = ['timer_nsg_recursepoll_' num2str(floor(100*rand(1)))]; % Neccesary in case more than one timer is running in paralell
-    t.TimerFcn = @(~,~)nsgpoll(joburl,g.verbose,t.Tag);
-    start(t);
-    wait(t);
-    delete(t);
-    jobstructmp = nsg_jobs(joburl);
-    jobstruct = jobstructmp.jobstatus;
+% Decoding input
+if ~isempty(jobid)
+    joburl = '';
+    if isstruct(jobid) % NSG struct
+        if isfield(jobid,'selfUri')
+            joburl = jobid.selfUri.url;
+        else
+            error('nsg_recurspoll: Invalid job structure provided as input');
+        end
+    elseif isnsgurl(jobid) % NSG URL
+        joburl = jobid;
+    elseif ischar(jobid) % NSG JobID
+        joburl = nsg_findclientjoburl(jobid);
+    end
+    if isempty(joburl), error('nsg_recurspoll: Invalid  argument to locate job'); end
+else
+    disp('nsg_recurspoll: Invalid argument to locate job');
+    return;
 end
+
+t = timer;
+t.Period =  g.pollinterval;
+t.ExecutionMode = 'fixedRate';
+t.TasksToExecute = 1000;
+t.BusyMode = 'queue';
+t.Tag = ['timer_nsg_recursepoll_' num2str(floor(100*rand(1)))]; % Neccesary in case more than one timer is running in paralell
+t.TimerFcn = @(~,~)nsgpoll(joburl,g.verbose,t.Tag);
+start(t);
+wait(t);
+delete(t);
+jobstructmp = nsg_jobs(joburl);
+jobstruct = jobstructmp.jobstatus;
 
 %---
 function nsgpoll(joburl,verbose,tagval)
@@ -86,7 +103,7 @@ end
  if verbose
      format shortg;
      timeval = clock;
-     disp(['Job status on ' num2str(timeval(2)) '-' num2str(timeval(3)) '-' num2str(timeval(1)) ' ' num2str(timeval(4)) ':'  num2str(timeval(5))   ' : ' stage]);
+     disp(['Job status on ' num2str(timeval(2)) '-' num2str(timeval(3)) '-' num2str(timeval(1)) ' ' num2str(timeval(4)) ':'  num2str(timeval(5)) ':'  num2str(floor(timeval(6)))  ' : ' stage]);
  end
 
 if strcmpi(stage, 'completed')
