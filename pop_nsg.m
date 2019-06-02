@@ -253,16 +253,22 @@ else
                 
     % Command line calls    
     else
-        if ~isempty(str)
-            if isstruct(str)
+        if ~isempty(str)    
+            valargin = '';
+            if isstruct(str) % NSG struct
                 if isfield(str,'selfUri')
                     valargin = str.selfUri.url;
                 else
                     error('pop_nsg: Invalid job structure provided as input');
                 end
-            else
+            elseif isnsgurl(str) % NSG URL
                 valargin = str;
+            elseif any(strcmp(fig,{'delete', 'output'})) % Case 'delete' and 'output'
+                valargin = nsg_findclientjoburl(str);    
+            elseif ischar(str) && strcmp(fig,'run') % zip file
+                 valargin = str;
             end
+            if isempty(valargin), error('pop_nsg: Invalid second argument'); end
             str = fig; % Here fig is the input.
         else
             disp('pop_nsg: Second argument invalid or have not been found.'); 
