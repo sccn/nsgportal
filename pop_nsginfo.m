@@ -88,4 +88,11 @@ g = finputcheck( options, fieldlist, 'pop_nsginfo');
 
 save('-mat', filename, '-struct', 'g');
 
-com = sprintf('pop_nsginfo(%s);', vararg2str(options));
+% Output command
+fieldstmp = fieldnames(g); c = 1;
+for iField =1:length(fieldstmp)
+    commopt{c}   = fieldstmp{iField};
+    commopt{c+1} = g.(fieldstmp{iField});
+    c = c+2;
+end
+com = sprintf('pop_nsginfo(%s);', vararg2str(commopt));
