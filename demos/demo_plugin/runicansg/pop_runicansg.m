@@ -72,7 +72,7 @@ end
 %% Section 2
 %  Create temporal folder and save data
 
-nsg_info; % get information on where to create the tempoal file
+nsg_info; % get information on where to create the temporal file
 jobID = 'runicansg_tmpjob'; % Job ID
 
 % Create a temporal folder
@@ -82,9 +82,8 @@ if exist(tmpJobPath,'dir'), rmdir(tmpJobPath,'s'); end
 mkdir(tmpJobPath); 
 
 % Save data in temporal folder previously created. 
-% Here change names to match the one in the script you will run in NSG
-newfilename = 'tempdatafile.set';
-pop_saveset(EEG,'filename',newfilename , 'filepath',tmpJobPath);
+% Here you may change the file name to match the one in the script you will run in NSG
+pop_saveset(EEG,'filename', EEG.filename, 'filepath', tmpJobPath);
 
 %% Section 3
 %  Manage m-file to be executed in NSG
@@ -95,7 +94,7 @@ pop_saveset(EEG,'filename',newfilename , 'filepath',tmpJobPath);
 % File writing begin ---
 fid = fopen( fullfile(tmpJobPath,'runicansg_job.m'), 'w');
 fprintf(fid, 'eeglab;\n');
-fprintf(fid, 'EEG = pop_loadset(''%s'');\n', newfilename);
+fprintf(fid, 'EEG = pop_loadset(''%s'');\n', EEG.filename);
 fprintf(fid, 'EEG = pop_runica(EEG, ''%s'',''%s'');\n', options{1},options{2});
 fprintf(fid, 'pop_saveset(EEG, ''filename'', ''%s'');\n',EEG.filename);
 fclose(fid);
