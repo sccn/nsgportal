@@ -40,7 +40,9 @@
 function OUT_EEG = pop_runicansg(EEG, varargin)
 OUT_EEG  = [];
 
-%% Inputs block
+%% Section 1
+%  Input block
+
 if nargin < 1   
     help pop_runicansg;
     return;
@@ -57,28 +59,36 @@ if nargin < 2
     result       = inputgui( 'geometry', geometry, 'geomvert', geomvert, 'uilist', promptstr, ...
                              'helpcom', 'pophelp(''pop_runicansg'')', ...
                              'title', 'Run ICA decomposition in NSG -- pop_runicansg()');
-    options = { 'icatype' allalgs{result{1}}};     
+    if ~isempty(result)
+        options = { 'icatype' allalgs{result{1}}};
+    else
+        return;
+    end
 else
     % Command line call
     options = varargin;   
 end
 
-%% Create temporal folder and save data
-nsg_info; % get information on where cto create the tempoal file
-jobID = 'runicansg_tmpjob';
+%% Section 2
+%  Create temporal folder and save data
+
+nsg_info; % get information on where to create the tempoal file
+jobID = 'runicansg_tmpjob'; % Job ID
 
 % Create a temporal folder
-foldername = 'runicansgtmp';
+foldername = 'runicansgtmp'; % Temporal folder name
 tmpJobPath = fullfile(outputfolder,'runicansgtmp');
 if exist(tmpJobPath,'dir'), rmdir(tmpJobPath,'s'); end
 mkdir(tmpJobPath); 
 
-% Save data in folder previously created. 
-% Here change names to match the one onin the script you will run in NSG
+% Save data in temporal folder previously created. 
+% Here change names to match the one in the script you will run in NSG
 newfilename = 'tempdatafile.set';
 pop_saveset(EEG,'filename',newfilename , 'filepath',tmpJobPath);
 
-%% Manage m-file to be executed in NSG
+%% Section 3
+%  Manage m-file to be executed in NSG
+
 % Write m-file to be run in NSG.
 % Options defined in plugin are written into the file
 
@@ -91,7 +101,9 @@ fprintf(fid, 'pop_saveset(EEG, ''filename'', ''%s'');\n',EEG.filename);
 fclose(fid);
 % File writing end ---
 
-%% Submit job to NSG
+%% Section 4
+%  Submit job to NSG
+
 jobstruct = pop_nsg('run',tmpJobPath,'filename', 'runicansg_job.m', 'jobid', jobID,'runtime', 0.5); 
 
 % ---
@@ -100,20 +112,28 @@ jobstruct = pop_nsg('run',tmpJobPath,'filename', 'runicansg_job.m', 'jobid', job
 % can be tracked. Note that NSG jobs can be retreived either by the NSG job ID
 % ,the NSG job structure or NSG job URL. (see pop_nsg help)
 
-%% Activate recurse polling
+%% Section 5
+%  Activate recurse polling
+%
 % Job status is checked every 60 second. Once finished, the function exits
 % returning the NSG job structure. This structure is used in the nex step
 % to download the results.
 
 jobstructout = nsg_recurspoll(jobstruct,'pollinterval', 60);
 
-%% Download data
+%% Section 6
+%  Download data
+
 pop_nsg('output',jobstructout); 
 
-%% Delete job (aleternatively)
+%% Section 7
+%  Delete job (aleternatively)
+
 pop_nsg('delete',jobstructout);
 
-%% Open data in EEGLAB and return results
+%% Section 8
+%  Open data in EEGLAB and return results
+
 OUT_EEG = pop_loadset(EEG.filename,fullfile(outputfolder,['nsgresults_' jobID],foldername));
 
 end
