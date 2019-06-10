@@ -70,18 +70,18 @@ else
 end
 
 %% Section 2
-%  Create temporal folder and save data
+%  Create temporary folder and save data
 
-nsg_info; % get information on where to create the temporal file
+nsg_info; % get information on where to create the temporary file
 jobID = 'runicansg_tmpjob'; % Job ID
 
-% Create a temporal folder
-foldername = 'runicansgtmp'; % Temporal folder name
+% Create a temporary folder
+foldername = 'runicansgtmp'; % temporary folder name
 tmpJobPath = fullfile(outputfolder,'runicansgtmp');
 if exist(tmpJobPath,'dir'), rmdir(tmpJobPath,'s'); end
 mkdir(tmpJobPath); 
 
-% Save data in temporal folder previously created. 
+% Save data in temporary folder previously created. 
 % Here you may change the file name to match the one in the script you will run in NSG
 pop_saveset(EEG,'filename', EEG.filename, 'filepath', tmpJobPath);
 
