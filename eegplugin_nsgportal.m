@@ -68,9 +68,9 @@ function vers = eegplugin_nsgportal(fig, trystrs, catchstrs)
     
     % create menus
     % ------------
-    submenu = uimenu( menu, 'Label', 'NSG portal');
+    submenu = uimenu( menu, 'Label', 'NSG Tools');
     set(menu, 'enable', 'on', 'userdata', 'startup:on;study:on');
-    uimenu( submenu, 'Label', 'Change NSG portal settings and credentials', 'CallBack', cominfo);
-    uimenu( submenu, 'Label', 'Execute EEGLAB scripts on NSG portal', 'CallBack', comnsg);
+    uimenu( submenu, 'Label', 'NSG portal credentials and settings', 'CallBack', cominfo);
+    uimenu( submenu, 'Label', 'Manage NSG jobs', 'CallBack', comnsg);
     
  
