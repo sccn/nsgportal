@@ -1,16 +1,16 @@
-% pop_runicansg() - Run an ICA decomposition of an EEG dataset in NSG.
-%                   This is an example of how to implement a plugin using HPC
-%                   resources at NSG through the EEGLAB plugin nsgportal
-%                   (see pop_nsg)
+% pop_icansg() - Run an ICA decomposition of an EEG dataset in NSG.
+%                his is an example of how to implement a plugin using HPC
+%                resources at NSG through the EEGLAB plugin nsgportal
+%                (see pop_nsg)
 % Usage: 
-%             >> OUT_EEG = pop_runicansg(EEG);
-%             >> OUT_EEG = pop_runicansg(EEG,'icatype','runica');
+%             >> OUT_EEG = pop_icansg(EEG);
+%             >> OUT_EEG = pop_icansg(EEG,'icatype','runica');
 %
 % Inputs:
 %   EEG         - input EEG dataset or array of datasets
 %
 % Optional inputs:
-%   'icatype'   - ['runica'|'binica'|'jader'| ICA algorithm 
+%   'icatype'   - ['runica'|'jader'|] ICA algorithm 
 %                 to use for the ICA decomposition. 
 %
 % Outputs:
@@ -37,18 +37,18 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-function OUT_EEG = pop_runicansg(EEG, varargin)
+function OUT_EEG = pop_icansg(EEG, varargin)
 OUT_EEG  = [];
 
 %% Section 1
 %  Input block
 
 if nargin < 1   
-    help pop_runicansg;
+    help pop_icansg;
     return;
 end
 
-allalgs   = { 'runica' 'binica' 'jader' }; 
+allalgs   = { 'runica' 'jader' }; 
 
 if nargin < 2
     % GUI call
@@ -57,8 +57,8 @@ if nargin < 2
                      { 'style' 'listbox'    'string' char(allalgs{:}) 'callback', cb_ica }};
     geometry = { [2 1.5]};  geomvert = 1.5;                        
     result       = inputgui( 'geometry', geometry, 'geomvert', geomvert, 'uilist', promptstr, ...
-                             'helpcom', 'pophelp(''pop_runicansg'')', ...
-                             'title', 'Run ICA decomposition in NSG -- pop_runicansg()');
+                             'helpcom', 'pophelp(''pop_icansg'')', ...
+                             'title', 'Run ICA decomposition in NSG -- pop_icansg()');
     if ~isempty(result)
         options = { 'icatype' allalgs{result{1}}};
     else
@@ -73,11 +73,11 @@ end
 %  Create temporary folder and save data
 
 nsg_info; % get information on where to create the temporary file
-jobID = 'runicansg_tmpjob'; % Job ID
+jobID = 'icansg_tmpjob'; % Job ID
 
 % Create a temporary folder
-foldername = 'runicansgtmp'; % temporary folder name
-tmpJobPath = fullfile(outputfolder,'runicansgtmp');
+foldername = 'icansgtmp'; % temporary folder name
+tmpJobPath = fullfile(outputfolder,'icansgtmp');
 if exist(tmpJobPath,'dir'), rmdir(tmpJobPath,'s'); end
 mkdir(tmpJobPath); 
 
@@ -92,7 +92,7 @@ pop_saveset(EEG,'filename', EEG.filename, 'filepath', tmpJobPath);
 % Options defined in plugin are written into the file
 
 % File writing begin ---
-fid = fopen( fullfile(tmpJobPath,'runicansg_job.m'), 'w');
+fid = fopen( fullfile(tmpJobPath,'icansg_job.m'), 'w');
 fprintf(fid, 'eeglab;\n');
 fprintf(fid, 'EEG = pop_loadset(''%s'');\n', EEG.filename);
 fprintf(fid, 'EEG = pop_runica(EEG, ''%s'',''%s'');\n', options{1},options{2});
@@ -103,7 +103,7 @@ fclose(fid);
 %% Section 4
 %  Submit job to NSG
 
-jobstruct = pop_nsg('run',tmpJobPath,'filename', 'runicansg_job.m', 'jobid', jobID,'runtime', 0.5); 
+jobstruct = pop_nsg('run',tmpJobPath,'filename', 'icansg_job.m', 'jobid', jobID,'runtime', 0.5); 
 
 % ---
 % Alternatively, the script may end up here. In this case consider adding
