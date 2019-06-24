@@ -7,15 +7,16 @@
 % Command line options :
 % These options must be provided as a single pair ('optname', optarg) per call
 %   'test'      - Perform test on the .zip or folder provided as argument.
+%                 If this option is used the option 'filename' is mandatory.
 %   'output'    - Retrieve the output files of the job identifier or job 
 %                 structure  provided as argument
 %   'delete'    - Delete job  associated to job identifier or job structure 
 %                 provided as argument
 %   'run'       - Submit .zip or folder provided as argument to run on NSG.
-%                 If this option is used the option 'filename' is mandatory
+%                 If this option is used the option 'filename' is mandatory.
 %   'filename'  - String with the name of main file to run in NSG. Use only 
-%                 (mandatory) if command line option option 'run' is used.
-%                 Otherwise not used with any other option
+%                 (mandatory) if command line option option 'run' or test are.
+%                 used. Otherwise not used with any other option
 % 
 % Optional inputs:
 %   'jobid'           - String with the client job id. This was assigned to the
@@ -234,7 +235,7 @@ else
         if isempty(g.listvalue), g.listvalue = get(findobj(fig, 'tag', 'joblist'), 'value'); end
         
         % Def .m file to run
-        if any(strcmp(str,{'rungui', 'test'}))
+        if any(strcmp(str,{'rungui', 'testgui'}))
             % mfiles
             if ~isempty(deblank(tmplist))
                 g.filename = tmplist{get(findobj(fig, 'tag', 'listbox_mfile'), 'value')}; % Updating mfile
@@ -249,6 +250,17 @@ else
             jobstruct = get(fig, 'userdata');
             joblist =  {jobstruct.url};
             if ~strcmp(str,'rescan'),jobstr = joblist{g.listvalue}; end          
+        end
+        
+        % Retrieve optional parameters
+        tmpoptparams   = eval( [ '{' get(findobj(gcf,'tag','edit_runopt'),'string') '}' ] );
+        tmpparams_name = tmpoptparams(1:2:end);
+        
+        % Update parameters here
+        c =1;
+        for i = 1: length(tmpparams_name)
+            g.(tmpparams_name{i}) =  tmpoptparams{c+1};
+            c = c+2;
         end
                 
     % Command line calls    
@@ -265,8 +277,9 @@ else
                 valargin = str;
             elseif any(strcmp(fig,{'delete', 'output'})) % Case 'delete' and 'output'
                 valargin = nsg_findclientjoburl(str);    
-            elseif ischar(str) && strcmp(fig,'run') % zip file
+            elseif ischar(str) && any(strcmp(fig,{'run', 'test'})) % zip file
                  valargin = str;
+                 if isempty(g.filename), disp('pop_nsg: Option ''filename'' MUST be provided'); return; end
             end
             if isempty(valargin), error('pop_nsg: Invalid second argument'); end
             str = fig; % Here fig is the input.
@@ -451,26 +464,16 @@ else
             if isempty(newjob)
                 warndlg2('Empty input');
             else
-                pop_nsg('test',newjob);
+                pop_nsg('test',newjob,'filename', g.filename, 'subdirname', g.subdirname);
             end
             
         case 'test'
-            nsg_test(valargin);
+            nsg_test(valargin, g.filename, g.subdirname);
 
         case 'rungui' 
              if isempty(newjob)
                 warndlg2('Empty input');
              else  
-                 % Retreive parameters
-                tmpoptparams   = eval( [ '{' get(findobj(gcf,'tag','edit_runopt'),'string') '}' ] );
-                tmpparams_name = tmpoptparams(1:2:end);
-                
-                % Update parameters here
-                c =1;
-                for i = 1: length(tmpparams_name)
-                    g.(tmpparams_name{i}) =  tmpoptparams{c+1};
-                    c = c+2;
-                end
                 
                 nsgrunoptname  = {'jobid' 'outfile' 'runtime' 'filename' 'subdirname'};
                 c = 1;
@@ -492,9 +495,7 @@ else
                 pop_nsg(fig, 'rescan','listvalue',listpos);
              end    
              
-        case 'run'
-            if isempty(g.filename), disp('pop_nsg: Option ''filename'' MUST be provided'); return; end
-            
+        case 'run'            
             if isempty(g.jobid)
                 [trash,filenamenoext] = fileparts(valargin);
                 g.jobid = [filenamenoext num2str(ceil(1000*rand(1)))];
