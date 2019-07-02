@@ -22,6 +22,7 @@
 %  'subdirname'     - Name of Sub-directory containing the main file i.e. if
 %                     your main file is not on the top level directory.
 %                     Default: None
+%  'nnodes'         - Number of nodes to use if running AMICA. Default: 1 
 %   
 %  See also: nsg_delete(), nsg_jobs(), nsg_test(), nsg_run(), nsg_findclientjoburl()
 %
@@ -61,6 +62,7 @@ try g.outfile; assert(~isempty(g.outfile));   catch, g.outfile         = ['nsgre
 try g.runtime;                                catch, g.runtime         = 0.5;                      end
 try g.filename;                               catch, g.filename        = '';                       end
 try g.subdirname;                             catch, g.subdirname      = '';                       end
+try g.nnodes;                                 catch, g.nnodes          = 1;                        end
 
 if isempty(g.filename)
     disp('nsg_run: Property filename must be provided'); 
@@ -84,14 +86,15 @@ curlcom = ['curl -s -u %s:%s -H cipres-appkey:%s %s/job/%s -F tool=EEGLAB_TG'...
                                                       ' -F metadata.clientJobId=%s'...
                                                       ' -F vparam.outputfilename_="%s"'...
                                                       ' -F vparam.runtime_=%f'...
+                                                      ' -F vparam.number_nodes_=%u'...
                                                       ' -F vparam.filename_=%s'];                                                                                                                                                                                                    
 % Submit job
 if isempty(g.subdirname)
    command = sprintf([curlcom ' > tmptxt.xml'], nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername,...
-                                                zipFile, num2str(g.jobid), g.outfile, g.runtime, g.filename);                                                                                    
+                                                zipFile, num2str(g.jobid), g.outfile, g.runtime, g.nnodes, g.filename);                                                                                    
 else
    command = sprintf([curlcom ' -F vparam.subdirname_=%s > tmptxt.xml'], nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername,...
-                                                                      zipFile, num2str(g.jobid), g.outfile, g.runtime, g.filename, g.subdirname);
+                                                                      zipFile, num2str(g.jobid), g.outfile, g.runtime, g.nnodes, g.filename, g.subdirname);
 end
 system(command);
 disp('Job has been submitted!');
