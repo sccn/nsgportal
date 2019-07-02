@@ -32,6 +32,7 @@
 %   'subdirname'      - Name of Sub-directory containing the main file i.e. if
 %                       your main file is not on the top level directory. Use
 %                       with command line option option 'run'. Default: None
+%   'nnodes'          - Number of nodes to use if running AMICA. Default: 1 
 %
 % Outputs:
 %   currentjob  - When pop_nsg is called from the command line (see Command line  
@@ -83,6 +84,7 @@ try g.outfile;          catch, g.outfile         = '';          end % Default de
 try g.runtime;          catch, g.runtime         = 0.5;         end
 try g.filename;         catch, g.filename        = '';          end
 try g.subdirname;       catch, g.subdirname      = '';          end
+try g.nnodes;           catch, g.nnodes          = 1;           end
 
 % Internet checking
 if ~nsg_checknet
@@ -475,7 +477,7 @@ else
                 warndlg2('Empty input');
              else  
                 
-                nsgrunoptname  = {'jobid' 'outfile' 'runtime' 'filename' 'subdirname'};
+                nsgrunoptname  = {'jobid' 'outfile' 'runtime' 'filename' 'nnodes' 'subdirname'};
                 c = 1;
                 for i = 1:length(nsgrunoptname)
                     tmpparams{c} = nsgrunoptname{i};
