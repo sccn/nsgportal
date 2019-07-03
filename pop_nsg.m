@@ -298,8 +298,8 @@ else
                flagerror = 0;
                if ~isempty(resjob.results.jobfiles)
                    zipfilepos = find(cell2mat(cellfun(@(x) strcmpi(x.parameterName,'outputfile'),resjob.results.jobfiles.jobfile,'UniformOutput',0)));
-                   if ~isempty(zipfilepos)
-                       [tmp, tmpval] = fileparts(resjob.results.jobfiles.jobfile{zipfilepos}.filename);
+                   if ~isempty(zipfilepos(1))
+                       [tmp, tmpval] = fileparts(resjob.results.jobfiles.jobfile{zipfilepos(1)}.filename);
                        [tmp, foldname] = fileparts(tmpval);
                        tmpFolder = fullfile(outputfolder, foldname);
                        if exist(tmpFolder,'dir')
@@ -445,12 +445,12 @@ else
             if ~isempty(resjob.results.jobfiles)
                 % Find zip file of results (name is not fixed anymore)
                 zipfilepos = find(cell2mat(cellfun(@(x) strcmpi(x.parameterName,'outputfile'),resjob.results.jobfiles.jobfile,'UniformOutput',0)));
-                if ~isempty(zipfilepos)
+                if ~isempty(zipfilepos(1))
                     % Getting name of results file
-                    [tmp, tmpval] = fileparts(resjob.results.jobfiles.jobfile{zipfilepos}.filename);
+                    [tmp, tmpval] = fileparts(resjob.results.jobfiles.jobfile{zipfilepos(1)}.filename);
                     [tmp, foldname] = fileparts(tmpval);
                     % Pulling results
-                    restmp  = nsg_jobs(resjob.results.jobfiles.jobfile{zipfilepos}.downloadUri.url, 'zip',foldname);
+                    restmp  = nsg_jobs(resjob.results.jobfiles.jobfile{zipfilepos(1)}.downloadUri.url, 'zip',foldname);
                 end
             end
             if restmp == 0
@@ -597,7 +597,7 @@ if ~isempty(jobStatus)
         if strcmpi(stage, 'completed')
             resjob  = nsg_jobs([jobstruct(i).url '/output']);
             if ~isempty(resjob.results.jobfiles)
-                url = geturl(resjob.results.jobfiles.jobfile, 'STDOUT');
+                url = geturl(resjob.results.jobfiles.jobfile, 'STDERR');
             else
                 url = '';
             end
@@ -609,7 +609,11 @@ if ~isempty(jobStatus)
             tmp = dir(resfile);
             fid = fopen(fullfile(tmp.folder,'tmptxt.txt'));
             matlog = textscan(fid,'%q');
-            jobstruct(i).matlaberrorflag = ~isempty(find(cell2mat(cellfun(@(x)strcmp(x,'Error'), matlog{1}, 'UniformOutput', 0))));
+            if ~isempty(matlog{1})
+                jobstruct(i).matlaberrorflag = strcmp(matlog{1}{1},'{'); % Signature of error reported in STDERR
+            else
+                jobstruct(i).matlaberrorflag = 0;
+            end
         end
         
         % Job  status
