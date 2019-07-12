@@ -53,11 +53,11 @@ allalgs   = { 'runica' 'jader' };
 if nargin < 2
     % GUI call
     cb_ica = 'close(gcbo);';        
-    promptstr    = { { 'style' 'text'       'string' 'ICA algorithm to use (click to select)' } ...
-                     { 'style' 'listbox'    'string' char(allalgs{:}) 'callback', cb_ica }};
+    promptstr    = { { 'style' 'text'    'string' 'ICA algorithm to use (click to select)' } ...
+                     { 'style' 'listbox' 'string' char(allalgs{:}) 'callback', cb_ica }};
     geometry = { [2 1.5]};  geomvert = 1.5;                        
-    result       = inputgui( 'geometry', geometry, 'geomvert', geomvert, 'uilist', promptstr, ...
-                             'helpcom', 'pophelp(''pop_icansg'')', ...
+    result       = inputgui( 'geometry', geometry, 'geomvert', geomvert,...
+                             'uilist', promptstr, 'helpcom', 'pophelp(''pop_icansg'')', ...
                              'title', 'Run ICA decomposition in NSG -- pop_icansg()');
     if ~isempty(result)
         options = { 'icatype' allalgs{result{1}}};
@@ -65,7 +65,8 @@ if nargin < 2
         return;
     end
 else
-    % Command line call
+    % Command line call specifying the ICA decomposition method;
+    %  in this case no pop-up parameter input window is created.
     options = varargin;   
 end
 
@@ -73,7 +74,7 @@ end
 %  Create temporary folder and save data
 
 nsg_info; % get information on where to create the temporary file
-jobID = 'icansg_tmpjob'; % Job ID
+jobID = 'icansg_tmpjob'; % Specified job ID (must be a string)
 
 % Create a temporary folder
 foldername = 'icansgtmp'; % temporary folder name
@@ -82,7 +83,8 @@ if exist(tmpJobPath,'dir'), rmdir(tmpJobPath,'s'); end
 mkdir(tmpJobPath); 
 
 % Save data in temporary folder previously created. 
-% Here you may change the file name to match the one in the script you will run in NSG
+% Here you may change the filename to match the one
+% in the script to be executed via NSG
 pop_saveset(EEG,'filename', EEG.filename, 'filepath', tmpJobPath);
 
 %% Section 3
@@ -103,7 +105,10 @@ fclose(fid);
 %% Section 4
 %  Submit job to NSG
 
-jobstruct = pop_nsg('run',tmpJobPath,'filename', 'icansg_job.m', 'jobid', jobID,'runtime', 0.5); 
+MAX_RUN_HOURS = 0.5;
+jobstruct = pop_nsg('run',tmpJobPath,'filename', 'icansg_job.m',...
+                    'jobid', jobID,'runtime', MAX_RUN_HOURS); % run the job via NSG; here 
+                                                              % ask for up to 30 min runtime
 
 % ---
 % Alternatively, the script may end up here. In this case consider adding
@@ -118,7 +123,10 @@ jobstruct = pop_nsg('run',tmpJobPath,'filename', 'icansg_job.m', 'jobid', jobID,
 % returning the NSG job structure. This structure is used in the nex step
 % to download the results.
 
-jobstructout = nsg_recurspoll(jobstruct,'pollinterval', 60);
+POLL_INTERVAL = 60;  % use a (default) 60-second polling interval value
+jobstructout = nsg_recurspoll(jobstruct,...
+                              'pollinterval', POLL_INTERVAL); % recursively poll for NSG job status 
+                                                              % and display latest results
 
 %% Section 6
 %  Download data
