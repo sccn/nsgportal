@@ -37,25 +37,33 @@
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 function res2 = nsg_jobs(jobname, filetype, foldname)
+res2 = [];
 
 nsg_info;
 if ~exist('filetype', 'var'), filetype = 'xml'; end
 if ~exist('filename', 'var'), foldname = ''; end
 if nargin < 1
-      fprintf('Accessing jobs on NSG...')
+      fprintf('Accessing jobs on NSG...\n')
 
     command = sprintf('curl -s -u %s:%s -H cipres-appkey:%s "%s/job/%s?expand=true" > tmptxt.xml', nsgusername,  nsgpassword, nsgkey, nsgurl, nsgusername); % request full job status objects
     system(command);
-    res2 = xml2struct('tmptxt.xml');
+    try
+        res2 = xml2struct('tmptxt.xml');
+    catch
+        return;
+    end
     res2 = removeTextTag(res2);    
 else
-    fprintf('Accessing job: "%s" on NSG...',jobname)
+    fprintf('Accessing job: "%s" on NSG...\n',jobname)
 
     if strcmpi(filetype, 'xml')
         command = sprintf(['curl -s -u %s:%s -H cipres-appkey:%s "%s?expand=true" > tmptxt.' filetype], nsgusername, nsgpassword, nsgkey, jobname);
         system(command);
-        
-        res2 = xml2struct('tmptxt.xml');
+        try
+            res2 = xml2struct('tmptxt.xml');
+        catch
+            return;
+        end
         res2 = removeTextTag(res2);
         
     elseif strcmpi(filetype, 'txt')
