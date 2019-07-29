@@ -107,6 +107,10 @@ if nargin < 1
         errordlg2(res.error.message);
         error(res.error.message);
     end
+    if isempty(res)
+        errordlg2('NSG service may be interrupted');
+        error('NSG service may be interrupted');
+    end
     
     jobstruct    = backupjobstatus(res);
     jobnames     = {jobstruct.dispname};
@@ -190,14 +194,14 @@ if nargin < 1
              {wt ht [c4 2.33]     [horzspan vertspam] }...    % Button error log
              {wt ht [c4 3.66]     [horzspan vertspam] }...    % Button download log
              {wt ht [c4 5]        [horzspan vertspam] }...    % Button plot
-             {wt ht [c2 5.6]      [horzspan vertspam] }...    % Legend 0
-             {wt ht [c2+1 5.6]    [horzspan vertspam] }...    % Legend 1
+             {wt ht [c2      5.6] [horzspan vertspam] }...    % Legend 0
+             {wt ht [c2+1    5.6] [horzspan vertspam] }...    % Legend 1
              {wt ht [c2+1.75 5.6] [horzspan vertspam] }...    % Legend 2
              {wt ht [c2+2.55 5.6] [horzspan vertspam] }...    % Legend 3
-             {wt ht [c2+3.5 5.6]  [horzspan-1 vertspam] }...  % Legend 4
-             {wt ht [c1 6.4]      [horzspan vertspam] }...    % Label Status
-             {wt ht [c2 6.4]      [horzspan vertspam] }...    % Text Job Status
-             {wt ht [c2 6.6]      [5 6.5]   }...              % List Joblog
+             {wt ht [c2+3.5  5.6] [horzspan-1 vertspam] }...  % Legend 4
+             {wt ht [c1 6.55]     [horzspan vertspam] }...    % Label Status
+             {wt ht [c2 6.55]     [horzspan vertspam] }...    % Text Job Status
+             {wt ht [c2 6.65]     [4.4 6.4]   }...              % List Joblog
              {wt ht [c1 11.7]     [horzspan vertspam] } ...   % Label submit
              {wt ht [c1 12.7]     [horzspan vertspam] } ...   % Label select file 
              {wt ht [c2 12.7]     [4.4 vertspam] } ...        % Edit Filepath
