@@ -201,7 +201,7 @@ if nargin < 1
              {wt ht [c2+3.5  5.6] [horzspan-1 vertspam] }...  % Legend 4
              {wt ht [c1 6.55]     [horzspan vertspam] }...    % Label Status
              {wt ht [c2 6.55]     [horzspan vertspam] }...    % Text Job Status
-             {wt ht [c2 6.65]     [4.4 6.4]   }...              % List Joblog
+             {wt ht [c2 6.65]     [4.4 6.4]   }...            % List Joblog
              {wt ht [c1 11.7]     [horzspan vertspam] } ...   % Label submit
              {wt ht [c1 12.7]     [horzspan vertspam] } ...   % Label select file 
              {wt ht [c2 12.7]     [4.4 vertspam] } ...        % Edit Filepath
@@ -541,13 +541,13 @@ end
 end
 
 % ---   
-function urlflag = isnsgurl(urlcheck)
-if length(urlcheck)>= 21
-    urlflag =fastif(strcmp('https://nsgr.sdsc.edu',urlcheck(1:21)),1,0);  
-else
-    urlflag = 0;
-end
-end
+% function urlflag = isnsgurl(urlcheck)
+% if length(urlcheck)>= 21
+%     urlflag =fastif(strcmp('https://nsgr.sdsc.edu',urlcheck(1:21)),1,0);  
+% else
+%     urlflag = 0;
+% end
+% end
 
 % --- 
 function jobstruct = backupjobstatus(res)
