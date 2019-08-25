@@ -55,9 +55,12 @@ for i =1:ninputs
         end    
     end
     
-    tmphit = find(cellfun(@(x) strcmp(x.key,'clientJobId'),jobstr.metadata.entry));
-    if ~isempty(tmphit)
-        jobidtmp = jobstr.metadata.entry{tmphit}.value;
+    jobidtmp = '';
+    if iscell(jobstr.metadata.entry)
+        tmphit = find(cellfun(@(x) strcmp(x.key,'clientJobId'),jobstr.metadata.entry));
+        jobidtmp = jobstr.metadata.entry{tmphit}.value; 
+    elseif isstruct(jobstr.metadata.entry) && strcmp(jobstr.metadata.entry.key,'clientJobId')
+        jobidtmp = jobstr.metadata.entry.value;
     end
     
     % Note: The rationale here is by assuming that numeric IDs are not assigned
