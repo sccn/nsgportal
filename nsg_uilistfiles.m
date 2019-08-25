@@ -172,7 +172,7 @@ switch ext(2:end)
     case 'mat'
         evalin('base','load(filefull)');
     otherwise
-        disp('pop_nsg: Not a valid file extension');
+        disp('nsg_uilistfiles: Not a valid file extension');
 end
 end
 
