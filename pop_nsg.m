@@ -33,6 +33,9 @@
 %                       your main file is not on the top level directory. Use
 %                       with command line option option 'run'. Default: None
 %   'nnodes'          - Number of nodes to use if running AMICA. Default: 1 
+%   'statusemail'     - 'true'| 'false'. If "true", an email will be sentafter
+%                       job completion. Use with command line option option 'run'.
+%                       Default: 'true'
 %
 % Outputs:
 %   currentjob  - When pop_nsg is called from the command line (see Command line  
@@ -78,13 +81,15 @@ catch
     disp('pop_nsg() error: calling convention {''key'', value, ... } error'); return;
 end
 
-try g.listvalue;        catch, g.listvalue       = [] ;          end
+try g.listvalue;        catch, g.listvalue       = [] ;         end
 try g.jobid;            catch, g.jobid           = '';          end
 try g.outfile;          catch, g.outfile         = '';          end % Default defined in nsg_run
 try g.runtime;          catch, g.runtime         = 0.5;         end
 try g.filename;         catch, g.filename        = '';          end
 try g.subdirname;       catch, g.subdirname      = '';          end
 try g.nnodes;           catch, g.nnodes          = 1;           end
+try g.statusemail;      catch, g.statusemail     = 'true';      end
+try g.emailaddress;     catch, g.emailaddress    = '';          end % Not implemented in NSGR yet
 
 % Internet checking
 if ~nsg_checknet
@@ -481,7 +486,7 @@ else
                 warndlg2('Empty input');
              else  
                 
-                nsgrunoptname  = {'jobid' 'outfile' 'runtime' 'filename' 'nnodes' 'subdirname'};
+                nsgrunoptname  = {'jobid' 'outfile' 'runtime' 'filename' 'nnodes' 'subdirname' 'statusemail' 'emailaddress'};
                 c = 1;
                 for i = 1:length(nsgrunoptname)
                     tmpparams{c} = nsgrunoptname{i};
@@ -509,7 +514,9 @@ else
             if isempty(g.outfile)
                 g.outfile = ['nsgresults_' g.jobid];
             end
-            currentjoburl = nsg_run(valargin,'jobid', g.jobid,'outfile',g.outfile,'runtime',g.runtime,'filename', g.filename, 'subdirname', g.subdirname);
+            currentjoburl = nsg_run(valargin,'jobid', g.jobid,'outfile',g.outfile,'runtime',g.runtime,...
+                                             'filename', g.filename, 'subdirname', g.subdirname,'statusemail',g.statusemail,...
+                                             'emailaddress', g.emailaddress);
             % Command line output
             if ~isempty(currentjoburl)
                 tmpcurrentjob = nsg_jobs(currentjoburl);
@@ -613,6 +620,7 @@ if ~isempty(jobStatus)
             tmp = dir(resfile);
             fid = fopen(fullfile(tmp.folder,'tmptxt.txt'));
             matlog = textscan(fid,'%q');
+            try, delete(resfile); catch, end
             if ~isempty(matlog{1})
                 jobstruct(i).matlaberrorflag = strcmp(matlog{1}{1},'{'); % Signature of error reported in STDERR
             else
