@@ -23,6 +23,8 @@
 %                     your main file is not on the top level directory.
 %                     Default: None
 %  'nnodes'         - Number of nodes to use if running AMICA. Default: 1 
+%  'statusemail'    - 'true'| 'false'. If "true", an email will be sentafter
+%                     job completion. Default: 'true'
 %   
 %  See also: nsg_delete(), nsg_jobs(), nsg_test(), nsg_run(), nsg_findclientjoburl()
 %
@@ -63,6 +65,8 @@ try g.runtime;                                catch, g.runtime         = 0.5;   
 try g.filename;                               catch, g.filename        = '';                       end
 try g.subdirname;                             catch, g.subdirname      = '';                       end
 try g.nnodes;                                 catch, g.nnodes          = 1;                        end
+try g.statusemail;                            catch, g.statusemail     = 'true';                   end
+% try g.emailaddress;                           catch, g.emailaddress    = '';                       end % Not implemented in NSGR yet
 
 if isempty(g.filename)
     disp('nsg_run: Property filename must be provided'); 
@@ -82,20 +86,27 @@ end
 % Create command to run job
 curlcom = ['curl -s -u %s:%s -H cipres-appkey:%s %s/job/%s -F tool=EEGLAB_TG'...
                                                       ' -F input.infile_=@"%s"'...
-                                                      ' -F metadata.statusEmail=true'...
+                                                      ' -F metadata.statusEmail=%s'...
                                                       ' -F metadata.clientJobId=%s'...
                                                       ' -F vparam.outputfilename_="%s"'...
                                                       ' -F vparam.runtime_=%f'...
                                                       ' -F vparam.number_nodes_=%u'...
                                                       ' -F vparam.filename_=%s'];                                                                                                                                                                                                    
-% Submit job
-if isempty(g.subdirname)
-   command = sprintf([curlcom ' > tmptxt.xml'], nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername,...
-                                                zipFile, num2str(g.jobid), g.outfile, g.runtime, g.nnodes, g.filename);                                                                                    
-else
-   command = sprintf([curlcom ' -F vparam.subdirname_=%s > tmptxt.xml'], nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername,...
-                                                                      zipFile, num2str(g.jobid), g.outfile, g.runtime, g.nnodes, g.filename, g.subdirname);
+% Adding other options
+comstring1 = 'command = sprintf([curlcom ';
+comstring2 = 'nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername, zipFile, g.statusemail,num2str(g.jobid), g.outfile, g.runtime, g.nnodes, g.filename';
+if ~isempty(g.subdirname)
+    comstring1 = [comstring1 ''' -F vparam.subdirname_=''''%s'''''''];
+    comstring2 = [comstring2 ', g.subdirname'];
 end
+% if ~isempty(g.emailaddress)
+%     comstring1 = [comstring1 ''' -F vparam.emailAddress=''''%s'''''''];
+%     comstring2 = [comstring2 ', g.emailaddress'];
+% end
+commandstring = [comstring1 ' '' > tmptxt.xml''], ' comstring2 ');'];
+eval(commandstring);
+
+% Submit job
 system(command);
 disp('Job has been submitted!');
 
