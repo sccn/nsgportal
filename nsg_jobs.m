@@ -49,6 +49,7 @@ if nargin < 1
     system(command);
     try
         res2 = xml2struct('tmptxt.xml');
+        delete('tmptxt.xml');
     catch
         return;
     end
@@ -61,6 +62,7 @@ else
         system(command);
         try
             res2 = xml2struct('tmptxt.xml');
+            delete('tmptxt.xml');
         catch
             return;
         end
@@ -69,7 +71,7 @@ else
     elseif strcmpi(filetype, 'txt')
         command = sprintf(['curl -s -u %s:%s -H cipres-appkey:%s "%s?expand=true" > tmptxt.' filetype], nsgusername, nsgpassword, nsgkey, jobname);
         system(command);
-        res2 = [ 'tmptxt.' filetype ];
+        res2 = [ 'tmptxt.' filetype ]; % do not remove txt here. this is the output
     else
         if isempty(foldname)
             tmpval = fileparts(jobname);
