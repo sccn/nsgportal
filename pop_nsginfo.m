@@ -69,7 +69,7 @@ if nargin < 2
         { 'style' 'text' 'string' 'Output folder' } ...
         { 'style' 'edit' 'string' outputfolder 'tag' 'outputfolder' } ...
         { 'Style', 'pushbutton', 'string', 'Browse...', 'callback', commandload } };
-    geometry = { [3 3 1]  [3 3 1] [3 3 1] [3 3 1] [3 3 1] };
+    geometry = { [2 3 1.2]  [2 3 1.2] [2 3 1.2] [2 3 1.2] [2 3 1.2] };
     
     [res,~,~,options] = inputgui( 'geometry', geometry, 'uilist', uilist, 'title', 'NSG settings - pop_nsginfo()', 'helpcom', 'pophelp(''pop_nsginfo'')');
     if isempty(res), return; end
