@@ -46,17 +46,23 @@ if ~isempty(alljobs.joblist.jobs)
     njobs = length(alljobs.joblist.jobs.jobstatus);
     for icells = 1:ninputs
         if iscell(clientjobid), clientjobidtpm = clientjobid{icells}; else, clientjobidtpm = clientjobid; end
-        for i =1:njobs
+        %for i =1:njobs
+        i = 1;
+        while isempty(jobindx) && i<=njobs
             if njobs ~= 1
                 tmp = alljobs.joblist.jobs.jobstatus{i};
             else
                 tmp = alljobs.joblist.jobs.jobstatus;
             end
-            
-            tmphit = find(cellfun(@(x) strcmp(x.value,clientjobidtpm),tmp.metadata.entry));
+            if iscell(tmp.metadata.entry)
+                tmphit = find(cellfun(@(x) strcmp(x.value,clientjobidtpm),tmp.metadata.entry));
+            elseif isstruct(tmp.metadata.entry)
+                tmphit = 1;
+            end
             if ~isempty(tmphit)
                 jobindx = i;
             end
+            i = i+1;
         end
         if ~isempty(jobindx)
             if njobs ~= 1
@@ -72,5 +78,6 @@ if ~isempty(alljobs.joblist.jobs)
                 jobstruct = alljobs.joblist.jobs.jobstatus;
             end
         end
+    jobindx = [];    
     end
 end
