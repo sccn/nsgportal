@@ -85,7 +85,7 @@ t.ExecutionMode = 'fixedRate';
 t.TasksToExecute = 1000;
 t.BusyMode = 'queue';
 t.Tag = ['timer_nsg_recursepoll_' num2str(floor(100*rand(1)))]; % Neccesary in case more than one timer is running in paralell
-t.TimerFcn = @(~,~)nsgpoll(joburl,g.verbose,t.Tag);
+t.TimerFcn = @(~,~)nsg_poll(joburl,g.verbose,t.Tag);
 start(t);
 wait(t);
 delete(t);
@@ -93,7 +93,7 @@ jobstructmp = nsg_jobs(joburl);
 jobstruct = jobstructmp.jobstatus;
 
 %---
-function nsgpoll(joburl,verbose,tagval)
+function nsg_poll(joburl,verbose,tagval)
 res = nsg_jobs(joburl);
 if iscell(res.jobstatus.messages.message)
     stage =res.jobstatus.messages.message{end}.stage;
