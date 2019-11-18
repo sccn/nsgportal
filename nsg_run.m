@@ -18,7 +18,7 @@
 %                     name of the file submitted.
 %  'runtime'        - Time (in hours) to allocate for running the job in NSG. 
 %                     Maximun time allocation is 48 hrs. Default: 0.5
-%  'filename'       - Name of main file to run in NSG. Default: 'test.m'
+%  'filename'       - Name of main file to run in NSG. Default: None
 %  'subdirname'     - Name of Sub-directory containing the main file i.e. if
 %                     your main file is not on the top level directory.
 %                     Default: None
