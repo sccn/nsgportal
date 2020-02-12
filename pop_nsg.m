@@ -93,7 +93,8 @@ try g.emailaddress;     catch, g.emailaddress    = '';          end % Not implem
 
 % Internet checking
 if ~nsg_checknet
-    error('pop_nsg: Unable to establish a connection to ''www.nsgportal.org'' ');
+   error(['pop_nsg: Unable to establish a connection to ''www.nsgportal.org'' ' 10  ...
+          '         Check your internet connection and/or firewall settings']);
 end
 
 if nargin < 1
