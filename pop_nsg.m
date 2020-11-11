@@ -113,10 +113,10 @@ if nargin < 1
         errordlg2(res.error.message);
         error(res.error.message);
     end
-    if isempty(res)
-        errordlg2('NSG service may be interrupted');
-        error('NSG service may be interrupted');
-    end
+%     if isempty(res)
+%         errordlg2('NSG service may be interrupted');
+%         error('NSG service may be interrupted');
+%     end
     
     jobstruct    = backupjobstatus(res);
     jobnames     = {jobstruct.dispname};
@@ -133,7 +133,7 @@ if nargin < 1
     cbrun        = 'pop_nsg(gcbf,''rungui'',eval( [ ''{'' get(findobj(gcf,''tag'',''edit_runopt''),''string'') ''}'' ] ));';
     cbsetmfile   = 'jobfile = get(findobj(gcbf,''tag'',''fileorfolder''),''String''); mfilelist = '' '';if ~isempty(jobfile),if isdir(jobfile),mfilestmp = dir(fullfile(jobfile, ''*.m''));if ~isempty(mfilestmp), mfilelist = {mfilestmp.name}; end;else,mfilelist = listzipcontents(jobfile, ''.m'');if isempty(mfilelist), mfilelist = '' ''; end; end;set(findobj(gcbf,''tag'',''listbox_mfile''),''string'',mfilelist,''Value'', 1);end;clear pathname filename;';
     cbsetjobid   = 'if ~isequal(pathname, 0), [tmp, filenamenoext]= fileparts(filename); set(findobj(gcf,''tag'',''edit_jobid''),''string'',[filenamenoext num2str(ceil(1000*rand(1)))]);clear filenamenoext;end;';
-    cbload       =  ['ButtonName = questdlg2(''Do you want to load a ZIP file or a folder?'',''pop_nsg'',''Folder'', ''ZIP File'', ''ZIP File'');if strcmpi(ButtonName, ''zip file''),[filename pathname] = uigetfile({''*.zip'' ''*.ZIP''});if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', fullfile(pathname, filename));end;else,pathname = uigetdir();[trash,filename] = fileparts(pathname);if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', pathname);end;end;' cbsetjobid cbsetmfile];
+    cbload       =  ['ButtonName = questdlg2(''Do you want to load a ZIP file or a folder?'',''pop_nsg'',''Folder'', ''ZIP File'', ''ZIP File'');if isempty(ButtonName), return; end; if strcmpi(ButtonName, ''zip file''),[filename pathname] = uigetfile({''*.zip'' ''*.ZIP''});if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', fullfile(pathname, filename));end;else,pathname = uigetdir();if isequal(pathname,0), return; end; [trash,filename] = fileparts(pathname);if ~isequal(pathname, 0),set(findobj(gcbf, ''tag'', ''fileorfolder''), ''string'', pathname);end;end;' cbsetjobid cbsetmfile];
     cbmfileset   =  'jobfile = get(findobj(gcbf,''tag'',''fileorfolder''),''String'');if ~isempty(jobfile), [tmp, filenamenoext]=fileparts(jobfile); set(findobj(gcf,''tag'',''edit_jobid''),''string'',[filenamenoext num2str(ceil(1000*rand(1)))]);clear filenamenoext;end;';
     joblog       = char(ones(7,70)*' ');
     
@@ -304,7 +304,7 @@ else
     switch str
         case 'loadplot'
                nsg_info;
-               resjob  = nsg_jobs([ jobstr '/output' ]);
+               resjob  = nsg_jobs([ jobstr '/' ]);
                flagerror = 0;
                if ~isempty(resjob.results.jobfiles)
                    zipfilepos = find(cell2mat(cellfun(@(x) strcmpi(x.parameterName,'outputfile'),resjob.results.jobfiles.jobfile,'UniformOutput',0)));
