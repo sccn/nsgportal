@@ -49,7 +49,10 @@ else
         cd(tmpFolder);
         unzip(joblocation);
         
-        cd(tmpFolder);
+        folderContent = dir(pwd);
+        folderContent(strmatch('.',  { folderContent.name }, 'exact')) = [];
+        folderContent(strmatch('..', { folderContent.name }, 'exact')) = [];
+        cd(fullfile(folderContent(1).folder, folderContent(1).name));
         testIfTestPresent = dir(mfilename);
         if isempty(testIfTestPresent)
             zipContent = dir(pwd);
@@ -73,6 +76,8 @@ else
         disp('***************');
         disp('TEST SUCCESSFUL');
         disp('***************');
+        cd('..');
+        cd('..');
         rmdir(tmpFolder, 's');
         cd(currentFolder);
         
