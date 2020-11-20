@@ -165,6 +165,7 @@ if nargin < 1
                { 'style' 'pushbutton' 'string' 'MATLAB output log' 'tag' 'outputlog' 'callback' cbstdout 'TooltipString' ttoutlog} ...       % Button output log
                { 'style' 'pushbutton' 'string' 'MATLAB error log' 'tag' 'errorlog' 'callback' cbstderr 'TooltipString' tterrlog} ...         % Button error log
                { 'style' 'pushbutton' 'string' 'Download job results' 'tag' 'download' 'callback' cboutput 'TooltipString' ttresults}...     % Button download log %               { 'style' 'pushbutton' 'string' 'Load/plot results' 'tag' 'loadplot' 'callback' cbloadplot 'TooltipString' ttload}...         % Button plot
+               { 'style' 'pushbutton' 'string' 'Load/plot results' 'tag' 'loadplot' 'callback' cbloadplot 'TooltipString' ttload}...         % Button plot
                { 'style' 'text'       'string'  'Job color legend:'          'Tag' 'legend0'} ...                                            % legend 0
                { 'style' 'text'       'string'  [char(8226) ' Completed']    'Tag' 'legend1'} ...                                            % legend 1    
                { 'style' 'text'       'string'  [char(8226) ' Processing']   'Tag' 'legend2'} ...                                            % legend 2
@@ -197,7 +198,8 @@ if nargin < 1
              {wt ht [c2 1]        [4.4 5]   } ...             % List jobs
              {wt ht [c4 1]        [horzspan vertspam] } ...   % Button output log
              {wt ht [c4 2.33]     [horzspan vertspam] }...    % Button error log
-             {wt ht [c4 3.66]     [horzspan vertspam] }...    % Button download log %             {wt ht [c4 5]        [horzspan vertspam] }...    % Button plot
+             {wt ht [c4 3.66]     [horzspan vertspam] }...    % Button download log 
+             {wt ht [c4 5]        [horzspan vertspam] }...    % Button plot
              {wt ht [c2      5.6] [horzspan vertspam] }...    % Legend 0
              {wt ht [c2+1    5.6] [horzspan vertspam] }...    % Legend 1
              {wt ht [c2+1.75 5.6] [horzspan vertspam] }...    % Legend 2
@@ -302,7 +304,7 @@ else
     switch str
         case 'loadplot'
                nsg_info;
-               resjob  = nsg_jobs([ jobstr '/' ]);
+               resjob  = nsg_jobs([ jobstr '/output' ]);
                flagerror = 0;
                if ~isempty(resjob.results.jobfiles)
                    zipfilepos = find(cell2mat(cellfun(@(x) strcmpi(x.parameterName,'outputfile'),resjob.results.jobfiles.jobfile,'UniformOutput',0)));
