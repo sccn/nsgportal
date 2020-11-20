@@ -164,8 +164,7 @@ if nargin < 1
                { 'style' 'listbox'    'string' jobnames 'tag' 'joblist' 'callback' cblist 'TooltipString' ttjobs}...                         % List jobs
                { 'style' 'pushbutton' 'string' 'MATLAB output log' 'tag' 'outputlog' 'callback' cbstdout 'TooltipString' ttoutlog} ...       % Button output log
                { 'style' 'pushbutton' 'string' 'MATLAB error log' 'tag' 'errorlog' 'callback' cbstderr 'TooltipString' tterrlog} ...         % Button error log
-               { 'style' 'pushbutton' 'string' 'Download job results' 'tag' 'download' 'callback' cboutput 'TooltipString' ttresults}...     % Button download log
-               { 'style' 'pushbutton' 'string' 'Load/plot results' 'tag' 'loadplot' 'callback' cbloadplot 'TooltipString' ttload}...         % Button plot
+               { 'style' 'pushbutton' 'string' 'Download job results' 'tag' 'download' 'callback' cboutput 'TooltipString' ttresults}...     % Button download log %               { 'style' 'pushbutton' 'string' 'Load/plot results' 'tag' 'loadplot' 'callback' cbloadplot 'TooltipString' ttload}...         % Button plot
                { 'style' 'text'       'string'  'Job color legend:'          'Tag' 'legend0'} ...                                            % legend 0
                { 'style' 'text'       'string'  [char(8226) ' Completed']    'Tag' 'legend1'} ...                                            % legend 1    
                { 'style' 'text'       'string'  [char(8226) ' Processing']   'Tag' 'legend2'} ...                                            % legend 2
@@ -198,8 +197,7 @@ if nargin < 1
              {wt ht [c2 1]        [4.4 5]   } ...             % List jobs
              {wt ht [c4 1]        [horzspan vertspam] } ...   % Button output log
              {wt ht [c4 2.33]     [horzspan vertspam] }...    % Button error log
-             {wt ht [c4 3.66]     [horzspan vertspam] }...    % Button download log
-             {wt ht [c4 5]        [horzspan vertspam] }...    % Button plot
+             {wt ht [c4 3.66]     [horzspan vertspam] }...    % Button download log %             {wt ht [c4 5]        [horzspan vertspam] }...    % Button plot
              {wt ht [c2      5.6] [horzspan vertspam] }...    % Legend 0
              {wt ht [c2+1    5.6] [horzspan vertspam] }...    % Legend 1
              {wt ht [c2+1.75 5.6] [horzspan vertspam] }...    % Legend 2
@@ -418,11 +416,11 @@ else
             else
                 resfile = pwd; % any folder
             end
-            tmp = dir(resfile);
-            if tmp(1).bytes == 0 || isempty(url)
+            resFileLocation = dir(resfile);
+            if resFileLocation(1).bytes == 0 || isempty(resFileLocation)
                 warndlg2(['File is empty, check for errors' char(10) 'If you were checking for intermediate output log, try again later.']);
             else
-                pophelp(resfile, 1);
+                pophelp(fullfile(resFileLocation(1).folder, resFileLocation(1).name), 1);
             end
             
         case 'stderr'
@@ -438,11 +436,11 @@ else
             else
                 resfile = pwd; % any folder
             end
-            tmp = dir(resfile);
-            if tmp(1).bytes == 0 || isempty(url)
-                warndlg2('File is empty, check text output');
+            resFileLocation = dir(resfile);
+            if resFileLocation(1).bytes == 0 || isempty(resFileLocation)
+                warndlg2(['File is empty, check text output']);
             else
-                pophelp(resfile, 1);
+                pophelp(fullfile(resFileLocation(1).folder, resFileLocation(1).name), 1);
             end
             
         case 'outputgui' 
@@ -450,19 +448,20 @@ else
             pop_nsg('output', jobstr);
 
         case 'output'
-            resjob  = nsg_jobs([ valargin '/output' ]);
-            restmp = 0;
-            if ~isempty(resjob.results.jobfiles)
-                % Find zip file of results (name is not fixed anymore)
-                zipfilepos = find(cell2mat(cellfun(@(x) strcmpi(x.parameterName,'outputfile'),resjob.results.jobfiles.jobfile,'UniformOutput',0)));
-                if ~isempty(zipfilepos(1))
-                    % Getting name of results file
-                    [tmp, tmpval] = fileparts(resjob.results.jobfiles.jobfile{zipfilepos(1)}.filename);
-                    [tmp, foldname] = fileparts(tmpval);
-                    % Pulling results
-                    restmp  = nsg_jobs(resjob.results.jobfiles.jobfile{zipfilepos(1)}.downloadUri.url, 'zip',foldname);
-                end
-            end
+            restmp = nsg_download(valargin);
+%             resjob  = nsg_jobs([ valargin '/output' ]);
+%             restmp = 0;
+%             if ~isempty(resjob.results.jobfiles)
+%                 % Find zip file of results (name is not fixed anymore)
+%                 zipfilepos = find(cell2mat(cellfun(@(x) strcmpi(x.parameterName,'outputfile'),resjob.results.jobfiles.jobfile,'UniformOutput',0)));
+%                 if ~isempty(zipfilepos(1))
+%                     % Getting name of results file
+%                     [tmp, tmpval] = fileparts(resjob.results.jobfiles.jobfile{zipfilepos(1)}.filename);
+%                     [tmp, foldname] = fileparts(tmpval);
+%                     % Pulling results
+%                     restmp  = nsg_jobs(resjob.results.jobfiles.jobfile{zipfilepos(1)}.downloadUri.url, 'zip',foldname);
+%                 end
+%             end
             if restmp == 0
                 warndlg2('File is empty, check error');
             else

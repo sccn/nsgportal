@@ -10,5 +10,10 @@ To read a most recent detailed overview of the Open EEGLAB Portal, browse a [con
 
 This respository contains the  code for the EEGLAB plug-in interfacing the NSG portal through the REST API: nsgportal. The core functions of the plug-in were initially drafted by Arnaud Delorme and further modified and reworked by Ramon Martinez-Cancino, Dung Troung and Scott Makeig (The EEGLAB Team) with substantials contributions from the NSG team at the SDSC.
 
+# Versions
+v1.0 - version used for Neuroimage 2020 article
+
+v2.0 - version used for Nov. 2020 NSG online tutorial (increased robustness and command line calls)
+
 **Explore the NSGPORTAL Wiki [here](https://github.com/sccn/nsgportal/wiki)**
 

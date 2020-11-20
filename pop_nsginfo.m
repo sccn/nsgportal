@@ -44,6 +44,7 @@ if ~exist('nsgpassword' , 'var'), nsgpassword  = ''; end
 if ~exist('nsgurl'      , 'var'), nsgurl       = 'https://nsgr.sdsc.edu:8443/cipresrest/v1'; end
 if ~exist('outputfolder', 'var'), outputfolder = ''; end
 
+oldnsgpassword = nsgpassword;
 if nargin < 2
     commandload = [ '[filepathtmp] = uigetdir(''Select a folder'');' ...
                     'if filepathtmp(1) ~=0,' ...
@@ -53,6 +54,7 @@ if nargin < 2
                 
     % which set to save
     % -----------------
+    if ~isempty(nsgpassword), nsgpassword = char(ones(1,length(nsgpassword))*('*' + 0)); end
     uilist = { ...
         { 'style' 'text' 'string' 'NSG user name' } ...
         { 'style' 'edit' 'string' nsgusername 'tag' 'nsgusername' } ...
@@ -85,6 +87,7 @@ fieldlist = { 'nsgusername'     'string'       []         '';
               'nsgurl'          'string'       []         'https://nsgr.sdsc.edu:8443/cipresrest/v1';
               'outputfolder'    'string'       []         '' };
 g = finputcheck( options, fieldlist, 'pop_nsginfo');
+if all(g.nsgpassword == '*') g.nsgpassword = oldnsgpassword; end
 
 save('-mat', filename, '-struct', 'g');
 

@@ -75,6 +75,9 @@ end
 
 nsg_info;
 
+if ~exist(joblocation)
+    error('Cannot find file or folder');
+end
 [~, filename, ext] = fileparts(joblocation);
 if isempty(ext)
     zipFile = fullfile(outputfolder, [ filename '.zip' ]);

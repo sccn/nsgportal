@@ -5,11 +5,8 @@
 %             >> joblist = nsg_jobs
 %             >> joblist = nsg_jobs(jobname)
 %             >> joblist = nsg_jobs(jobname,'xml')
-%
-% Inputs:
-%
 % Outputs:
-%  res2    - Structure of job objects
+%  joblist    - Structure of job objects
 %
 % Optional inputs:
 %  'jobname'    - URL of job
