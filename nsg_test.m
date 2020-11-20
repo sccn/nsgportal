@@ -36,6 +36,9 @@ nsg_info;
 
 [~, filename, ext] = fileparts(joblocation);
 if isempty(ext)
+    if isempty(outputfolder)
+        outputfolder = pwd;
+    end
     zipFile = fullfile(outputfolder, [ filename '.zip' ]);
     zip(zipFile, joblocation);
     nsg_test(zipFile, mfilename, subdirname);
