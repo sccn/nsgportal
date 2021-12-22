@@ -46,8 +46,8 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-function jobURL = nsg_run(joblocation, varargin)
-jobURL = [];
+function nsg_run(joblocation, varargin)
+% jobURL = [];
 
 try
     options = varargin;
@@ -110,8 +110,17 @@ commandstring = [comstring1 ' '' > tmptxt.xml''], ' comstring2 ');'];
 eval(commandstring);
 
 % Submit job
-system(command);
-disp('Job has been submitted!');
+res = system([command '&']);
+if res == 0
+    msg = ['Submitting job to NSG... It might take some time to finish. '...
+        '        Please refresh job list to see submitted job'];
+    supergui( 'geomhoriz', { 1 1 1 }, 'uilist', { ...
+             { 'style', 'text', 'string', msg }, { }, ...
+             { 'style', 'pushbutton' , 'string', 'OK', 'callback', 'close(gcf)' } } );
+else
+    error('Error submitting job to NSG');
+end
+% disp('Job has been submitted!');
 
-% Find job URL
-jobURL = nsg_findclientjoburl(num2str(g.jobid));
+% % Find job URL
+% jobURL = nsg_findclientjoburl(num2str(g.jobid));

@@ -93,8 +93,8 @@ try g.emailaddress;     catch, g.emailaddress    = '';          end % Not implem
 
 % Internet checking
 if ~nsg_checknet
-   error(['pop_nsg: Unable to establish a connection to ''www.nsgportal.org'' ' 10  ...
-          '         Check your internet connection and/or firewall settings']);
+   error(['pop_nsg: Unable to establish a connection to NSG portal ' 10  ...
+          '         The portal might be down or check your internet connection and/or firewall settings']);
 end
 
 if nargin < 1
@@ -113,10 +113,10 @@ if nargin < 1
         errordlg2(res.error.message);
         error(res.error.message);
     end
-%     if isempty(res)
-%         errordlg2('NSG service may be interrupted');
-%         error('NSG service may be interrupted');
-%     end
+    if isempty(res)
+        errordlg2('NSG service may be interrupted');
+        error('NSG service may be interrupted');
+    end
     
     jobstruct    = backupjobstatus(res);
     jobnames     = {jobstruct.dispname};
@@ -516,14 +516,14 @@ else
             if isempty(g.outfile)
                 g.outfile = ['nsgresults_' g.jobid];
             end
-            currentjoburl = nsg_run(valargin,'jobid', g.jobid,'outfile',g.outfile,'runtime',g.runtime,...
+            nsg_run(valargin,'jobid', g.jobid,'outfile',g.outfile,'runtime',g.runtime,...
                                              'filename', g.filename, 'subdirname', g.subdirname,'statusemail',g.statusemail,...
                                              'emailaddress', g.emailaddress);
-            % Command line output
-            if ~isempty(currentjoburl)
-                tmpcurrentjob = nsg_jobs(currentjoburl);
-                currentjob = tmpcurrentjob.jobstatus;
-            end
+%             % Command line output
+%             if ~isempty(currentjoburl)
+%                 tmpcurrentjob = nsg_jobs(currentjoburl);
+%                 currentjob = tmpcurrentjob.jobstatus;
+%             end
     end 
     
     % Command line output
