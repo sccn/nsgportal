@@ -46,8 +46,8 @@
 % along with this program; if not, write to the Free Software
 % Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-function jobURL = nsg_run(joblocation, varargin)
-jobURL = [];
+function nsg_run(joblocation, varargin)
+% jobURL = [];
 
 try
     options = varargin;
@@ -64,8 +64,10 @@ try g.outfile; assert(~isempty(g.outfile));   catch, g.outfile         = ['nsgre
 try g.runtime;                                catch, g.runtime         = 0.5;                      end
 try g.filename;                               catch, g.filename        = '';                       end
 try g.subdirname;                             catch, g.subdirname      = '';                       end
-try g.nnodes;                                 catch, g.nnodes          = 1;                        end
+% try g.nnodes;                                 catch, g.nnodes          = 1;                        end
 try g.statusemail;                            catch, g.statusemail     = 'true';                   end
+try g.memory;                                 catch, g.memory          = 248;                      end
+try g.nthreads;                               catch, g.nthreads        = 1;                      end
 % try g.emailaddress;                           catch, g.emailaddress    = '';                       end % Not implemented in NSGR yet
 
 if isempty(g.filename)
@@ -87,17 +89,18 @@ else
 end
 
 % Create command to run job
-curlcom = ['curl -k -s -u %s:%s -H cipres-appkey:%s %s/job/%s -F tool=EEGLAB_TG'...
+curlcom = ['curl -k -s -u %s:%s -H cipres-appkey:%s %s/job/%s -F tool=EEGLAB_EXPANSE'...
                                                       ' -F input.infile_=@"%s"'...
                                                       ' -F metadata.statusEmail=%s'...
                                                       ' -F metadata.clientJobId=%s'...
                                                       ' -F vparam.outputfilename_="%s"'...
                                                       ' -F vparam.runtime_=%f'...
-                                                      ' -F vparam.number_nodes_=%u'...
-                                                      ' -F vparam.filename_=%s'];                                                                                                                                                                                                    
+                                                      ' -F vparam.filename_=%s'...
+                                                      ' -F vparam.number_gbmemorypernode_=%d'...
+                                                      ' -F vparam.threads_per_task_=%d'];                                                                                                                                                                                                    
 % Adding other options
 comstring1 = 'command = sprintf([curlcom ';
-comstring2 = 'nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername, zipFile, g.statusemail,num2str(g.jobid), g.outfile, g.runtime, g.nnodes, g.filename';
+comstring2 = 'nsgusername, nsgpassword, nsgkey, nsgurl, nsgusername, zipFile, g.statusemail,num2str(g.jobid), g.outfile, g.runtime, g.filename, g.memory, g.nthreads';
 if ~isempty(g.subdirname)
     comstring1 = [comstring1 ''' -F vparam.subdirname_=''''%s'''''''];
     comstring2 = [comstring2 ', g.subdirname'];
@@ -110,8 +113,17 @@ commandstring = [comstring1 ' '' > tmptxt.xml''], ' comstring2 ');'];
 eval(commandstring);
 
 % Submit job
-system(command);
-disp('Job has been submitted!');
+res = system([command '&']);
+if res == 0
+    msg = ['Submitting job to NSG... It might take some time to finish if job contains large data file. ' 10 ...
+        '        Please keep refreshing job list to see submitted job'];
+    supergui( 'geomhoriz', { 1 1 1 }, 'uilist', { ...
+             { 'style', 'text', 'string', msg }, { }, ...
+             { 'style', 'pushbutton' , 'string', 'OK', 'callback', 'close(gcf)' } } );
+else
+    error('Error submitting job to NSG');
+end
+% disp('Job has been submitted!');
 
-% Find job URL
-jobURL = nsg_findclientjoburl(num2str(g.jobid));
+% % Find job URL
+% jobURL = nsg_findclientjoburl(num2str(g.jobid));
