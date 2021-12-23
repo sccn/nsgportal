@@ -15,5 +15,7 @@ v1.0 - version used for Neuroimage 2020 article
 
 v2.0 - version used for Nov. 2020 NSG online tutorial (increased robustness and command line calls)
 
+v2.1 - Use EEGLAB on Expanse. Make job submission non-blocking
+
 **Explore the NSGPORTAL Wiki [here](https://github.com/sccn/nsgportal/wiki)**
 
