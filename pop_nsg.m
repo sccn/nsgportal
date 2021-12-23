@@ -94,7 +94,8 @@ try g.emailaddress;     catch, g.emailaddress    = '';          end % Not implem
 % Internet checking
 if ~nsg_checknet
    error(['pop_nsg: Unable to establish a connection to NSG portal ' 10  ...
-          '         The portal might be down or check your internet connection and/or firewall settings']);
+          '         The portal might be down or check your internet connection and/or firewall settings.' 10 ...
+          '         Makre sure that your MATLAB version is 2014b or above.']);
 end
 
 if nargin < 1
