@@ -22,7 +22,10 @@
 %  'subdirname'     - Name of Sub-directory containing the main file i.e. if
 %                     your main file is not on the top level directory.
 %                     Default: None
-%  'nnodes'         - Number of nodes to use if running AMICA. Default: 1 
+%  'nthreads'       - Number of threads per task. Default: 1 
+%
+%  'memory'         - Number of memory (in GB) per node. Default: 243
+%
 %  'statusemail'    - 'true'| 'false'. If "true", an email will be sentafter
 %                     job completion. Default: 'true'
 %   
@@ -61,12 +64,12 @@ catch
 end
 try g.jobid; assert(~isempty(g.jobid));       catch, g.jobid           = randi(10000);             end  
 try g.outfile; assert(~isempty(g.outfile));   catch, g.outfile         = ['nsgresults_' g.jobid];  end
-try g.runtime;                                catch, g.runtime         = 0.5;                      end
+try g.runtime;                                catch, g.runtime         = 1;                      end
 try g.filename;                               catch, g.filename        = '';                       end
 try g.subdirname;                             catch, g.subdirname      = '';                       end
 % try g.nnodes;                                 catch, g.nnodes          = 1;                        end
 try g.statusemail;                            catch, g.statusemail     = 'true';                   end
-try g.memory;                                 catch, g.memory          = 248;                      end
+try g.memory;                                 catch, g.memory          = 243;                      end
 try g.nthreads;                               catch, g.nthreads        = 1;                      end
 % try g.emailaddress;                           catch, g.emailaddress    = '';                       end % Not implemented in NSGR yet
 
