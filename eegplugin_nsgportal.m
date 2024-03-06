@@ -31,7 +31,7 @@
 
 function vers = eegplugin_nsgportal(fig, trystrs, catchstrs)
     
-    vers = 'nsgportal2.1';
+    vers = 'nsgportal2.1.1';
     if nargin < 3
         error('eegplugin_nsgportal requires 3 arguments');
     end;
